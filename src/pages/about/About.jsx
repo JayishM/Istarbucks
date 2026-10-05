@@ -2,7 +2,7 @@ import "./About.css";
 import Navbar from "../../components/navbar/navbar.jsx";
 
 import coffee from "../../assets/capuchino.png";
-
+import Footer from "../../components/footer/footer.jsx";
 function About() {
 
     return (
@@ -193,6 +193,7 @@ function About() {
                 </section>
 
             </div>
+            <Footer/>
         </>
     );
 }

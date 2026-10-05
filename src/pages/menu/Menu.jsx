@@ -2,10 +2,11 @@ import { useState } from "react";
 import "./Menu.css";
 
 import Navbar from "../../components/navbar/navbar.jsx";
-
 import cappuccino from "../../assets/capuchino.png";
 import float from "../../assets/float.png";
 import espresso from "../../assets/espresso.png";
+
+import Footer from "../../components/footer/footer.jsx";
 
 function Menu() {
 
@@ -184,6 +185,7 @@ function Menu() {
                 </section>
 
             </div>
+            <Footer/>
         </>
     );
 }

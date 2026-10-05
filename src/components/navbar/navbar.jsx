@@ -13,10 +13,10 @@ function Navbar() {
                 <Link to="/" className="active">Home</Link>
                 <Link to="/menu">Menu</Link>
                 <Link to="/about">About</Link>
-                <a>Services</a>
-                <a>Reviews</a>
-                <a>Blog</a>
-                <a>Contact</a>
+                <Link to="/services">Services</Link>
+                <Link to="/reviews">Reviews</Link>
+                <Link to="/blog">Blog</Link>
+                <Link to="/contact">Contact</Link>
             </div>
 
             <div className="nav-actions">
