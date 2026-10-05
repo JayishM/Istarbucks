@@ -1,6 +1,8 @@
 import Navbar from "./components/navbar/navbar.jsx";
 import Hero from "./components/hero/hero.jsx";
 import Trending from "./components/trending/trending.jsx";
+import WhyChoose from "./components/whyChoose/whyChoose.jsx";
+import About from "./components/about/about.jsx";
 import "./App.css";
 
 function App() {
@@ -17,6 +19,8 @@ function App() {
             </div>
 
             <Trending />
+            <WhyChoose />
+            <About />
         </div>
     );
 }

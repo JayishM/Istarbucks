@@ -1,0 +1,79 @@
+.whyChoose {
+    width: 85%;
+    margin: 70px auto;
+}
+
+.why-title {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.why-title span {
+    color: #e68120;
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+.why-title h2 {
+    color: white;
+    font-family: Georgia, serif;
+    font-size: 32px;
+    margin: 8px 0;
+}
+
+.why-title p {
+    color: #8f8178;
+    font-size: 13px;
+}
+
+.why-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+.why-card {
+    background: #1b1009;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 25px 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.why-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(230,129,32,0.4);
+}
+
+.why-card i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 48px;
+    height: 48px;
+
+    margin: 0 auto 15px;
+
+    border-radius: 50%;
+
+    background: rgba(230,129,32,0.1);
+    color: #e68120;
+
+    font-size: 20px;
+}
+
+.why-card h5 {
+    color: white;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.why-card p {
+    color: #8f8178;
+    font-size: 11px;
+    line-height: 1.6;
+    margin: 0;
+}
