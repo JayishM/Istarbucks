@@ -1,0 +1,44 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #0c0202;
+}
+
+.page {
+    min-height: 100vh;
+    background:
+        linear-gradient(
+            rgba(12, 5, 2, 0.82),
+            rgba(12, 5, 2, 0.95)
+        ),
+        url("./assets/background.jpeg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+
+    color: white;
+    overflow: hidden;
+}
+
+/* Section heading */
+
+.section-title {
+    width: 85%;
+    margin: 40px auto 25px;
+    color: #e68120;
+}
+
+.section-title hr {
+    border: 0;
+    border-top: 1px solid #8c5a32;
+    opacity: 0.6;
+}
+
+.section-title h5 {
+    font-size: 20px;
+    font-weight: 600;
+}
