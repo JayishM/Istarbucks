@@ -9,15 +9,14 @@
     position: relative;
 }
 
-/* LEFT */
-
 .hero-content {
     width: 50%;
     z-index: 2;
 }
 
 .premium {
-    color: #e68120;
+    color: #c68a52;
+
     font-size: 13px;
     font-weight: 600;
 
@@ -27,67 +26,65 @@
 }
 
 .premium span {
-    font-size: 18px;
+    color: #c68a52;
 }
 
 .hero h1 {
     font-family: Georgia, serif;
 
     font-size: clamp(45px, 5vw, 70px);
+
     line-height: 1.05;
 
     font-weight: 500;
 
-    color: #fff;
+    color: #e8d8c5;
 
     margin-bottom: 25px;
 }
 
 .hero h1 span {
-    color: #e68120;
+    color: #c68a52;
 }
 
 .hero-description {
-    color: #b9aaa0;
+    color: #a99582;
 
     font-size: 14px;
+
     line-height: 1.7;
 
     margin-bottom: 25px;
 }
 
-/* BUTTON */
-
 .explore-btn {
     border: none;
 
-    background: #e68120;
-    color: #241006;
+    background: #c68a52;
+
+    color: #24150d;
 
     border-radius: 30px;
 
     padding: 12px 22px;
 
     font-size: 13px;
+
     font-weight: 600;
 
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 
     transition: 0.3s;
 }
 
 .explore-btn:hover {
+    background: #d99a5c;
     transform: translateY(-2px);
-    background: #f09a3b;
 }
-
-.explore-btn i {
-    font-size: 15px;
-}
-
-/* RIGHT IMAGE */
 
 .hero-image {
     width: 50%;
@@ -96,6 +93,7 @@
     position: relative;
 
     display: flex;
+
     justify-content: center;
     align-items: center;
 }
@@ -107,12 +105,13 @@
     object-fit: contain;
 
     position: relative;
+
     z-index: 2;
 
-    filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.7));
+    filter: drop-shadow(
+        0 20px 25px rgba(0, 0, 0, 0.65)
+    );
 }
-
-/* Glow behind coffee */
 
 .coffee-glow {
     position: absolute;
@@ -120,14 +119,12 @@
     width: 350px;
     height: 350px;
 
-    background: rgba(172, 88, 22, 0.25);
+    background: rgba(150, 94, 48, 0.20);
 
-    filter: blur(80px);
+    filter: blur(90px);
 
     border-radius: 50%;
 }
-
-/* Badge */
 
 .coffee-badge {
     position: absolute;
@@ -135,37 +132,23 @@
     right: 0;
     top: 70px;
 
-    background: rgba(30, 17, 10, 0.85);
+    background: rgba(48, 32, 22, 0.88);
 
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid #604735;
 
     padding: 12px 18px;
 
     border-radius: 12px;
 
     display: flex;
+
     gap: 10px;
+
     align-items: center;
 
     z-index: 5;
 }
 
 .coffee-badge i {
-    color: #e68120;
-    font-size: 22px;
-}
-
-.coffee-badge small {
-    display: block;
-
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.coffee-badge span {
-    display: block;
-
-    color: #aaa;
-
-    font-size: 9px;
+    color: #c68a52;
 }

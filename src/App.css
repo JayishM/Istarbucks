@@ -4,15 +4,16 @@
 
 body {
     margin: 0;
-    background: #0c0202;
+    background: #21140d;
 }
 
 .page {
     min-height: 100vh;
+
     background:
         linear-gradient(
-            rgba(12, 5, 2, 0.82),
-            rgba(12, 5, 2, 0.95)
+            rgba(33, 20, 13, 0.82),
+            rgba(33, 20, 13, 0.94)
         ),
         url("./assets/background.jpeg");
 
@@ -20,25 +21,26 @@ body {
     background-position: center;
     background-attachment: fixed;
 
-    color: white;
+    color: #e8d8c5;
+
     overflow: hidden;
 }
-
-/* Section heading */
 
 .section-title {
     width: 85%;
     margin: 40px auto 25px;
-    color: #e68120;
+
+    color: #c68a52;
 }
 
 .section-title hr {
     border: 0;
-    border-top: 1px solid #8c5a32;
-    opacity: 0.6;
+    border-top: 1px solid #705746;
+
+    opacity: 0.7;
 }
 
 .section-title h5 {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 600;
 }

@@ -1,5 +1,5 @@
 import "./hero.css";
-import cappuccino from "../../assets/capuchino.png";
+import cappuccino from "../../assets/clear.jpeg";
 
 function Hero() {
     return (
