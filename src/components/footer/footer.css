@@ -1,0 +1,173 @@
+.footer {
+    background: #080303;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+    padding: 60px 7% 20px;
+
+    color: white;
+}
+
+.footer-main {
+    display: grid;
+
+    grid-template-columns:
+        2fr 1fr 1fr 1.5fr;
+
+    gap: 50px;
+
+    padding-bottom: 45px;
+}
+
+/* BRAND */
+
+.footer-brand h3 {
+    font-family: Georgia, serif;
+
+    font-size: 25px;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 15px;
+}
+
+.footer-brand h3 span {
+    color: #e68120;
+}
+
+.footer-brand p {
+    color: #81736b;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+    max-width: 250px;
+}
+
+/* SOCIAL */
+
+.social-icons {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+.social-icons a {
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid #49382d;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #a9998e;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.social-icons a:hover {
+    background: #e68120;
+
+    border-color: #e68120;
+
+    color: #211006;
+}
+
+/* COLUMNS */
+
+.footer-column {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.footer-column h5 {
+    color: white;
+
+    font-size: 14px;
+
+    margin-bottom: 8px;
+}
+
+.footer-column a {
+    color: #81736b;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.footer-column a:hover {
+    color: #e68120;
+}
+
+/* CONTACT */
+
+.contact p {
+    color: #81736b;
+
+    font-size: 12px;
+
+    margin: 0;
+}
+
+.contact i {
+    color: #e68120;
+
+    margin-right: 8px;
+}
+
+/* BOTTOM */
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+    padding-top: 20px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+.footer-bottom p {
+    color: #62564f;
+
+    font-size: 10px;
+
+    margin: 0;
+}
+
+.footer-bottom div {
+    display: flex;
+
+    gap: 20px;
+}
+
+.footer-bottom a {
+    color: #62564f;
+
+    font-size: 10px;
+
+    cursor: pointer;
+}
+
+.footer-bottom a:hover {
+    color: #e68120;
+}
