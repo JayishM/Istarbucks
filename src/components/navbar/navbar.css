@@ -132,3 +132,46 @@
 .profile-icon:hover {
     color: #e68120;
 }
+.login-nav-btn {
+    border: none;
+    background: transparent;
+    color: #E8D8C5;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.login-nav-btn:hover {
+    color: #e68120;
+}
+
+.profile-icon {
+    border: none;
+    background: transparent;
+    color: #E8D8C5;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.profile-icon:hover {
+    color: #e68120;
+}
+
+.dropdown-menu {
+    background: #302015;
+    border: 1px solid #4A3525;
+}
+
+.dropdown-item {
+    color: #E8D8C5;
+}
+
+.dropdown-item:hover {
+    background: #4A3525;
+    color: #ffffff;
+}
+
+.dropdown-header {
+    color: #e68120;
+}

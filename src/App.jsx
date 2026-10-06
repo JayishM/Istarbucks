@@ -14,8 +14,8 @@ import Checkout from "./pages/checkout/Checkout";
 import OrderSuccess from "./pages/order-success/OrderSuccess";
 import Orders from "./pages/orders/Orders";
 import ProductDetails from "./pages/product-details/ProductDetails";
-
-
+import Register from "./pages/register/Register";
+import Login from "./pages/login/Login";
 function App() {
   return (
     <BrowserRouter>
@@ -36,6 +36,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/product" element={<ProductDetails />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
 
       <Footer />
