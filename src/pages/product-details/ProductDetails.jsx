@@ -6,22 +6,14 @@ import { useCart } from "../../context/CartContext";
 function ProductDetails() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { addToCart } = useCart();
+
+    const {
+        addToCart,
+        updateCartItem
+    } = useCart();
 
     const product = location.state?.product;
-
-    const [size, setSize] = useState("Medium");
-    const [temperature, setTemperature] = useState("Hot");
-    const [sugar, setSugar] = useState("Medium");
-    const [milk, setMilk] = useState("Regular");
-
-    const [extras, setExtras] = useState({
-        shot: false,
-        oatMilk: false,
-        caramel: false
-    });
-
-    const [quantity, setQuantity] = useState(1);
+    const editMode = location.state?.editMode;
 
     if (!product) {
         return (
@@ -36,6 +28,44 @@ function ProductDetails() {
     }
 
     // -------------------------
+    // INITIAL VALUES
+    // -------------------------
+
+    const [size, setSize] = useState(
+        editMode ? product.size || "Medium" : "Medium"
+    );
+
+    const [temperature, setTemperature] = useState(
+        editMode ? product.temperature || "Hot" : "Hot"
+    );
+
+    const [sugar, setSugar] = useState(
+        editMode ? product.sugar || "Medium" : "Medium"
+    );
+
+    const [milk, setMilk] = useState(
+        editMode ? product.milk || "Regular" : "Regular"
+    );
+
+    const [quantity, setQuantity] = useState(
+        editMode ? product.quantity || 1 : 1
+    );
+
+    const [extras, setExtras] = useState({
+        shot: editMode
+            ? product.extras?.extraShot || false
+            : false,
+
+        oatMilk: editMode
+            ? product.extras?.oatMilk || false
+            : false,
+
+        caramel: editMode
+            ? product.extras?.caramel || false
+            : false
+    });
+
+    // -------------------------
     // SIZE PRICES
     // -------------------------
 
@@ -47,8 +77,6 @@ function ProductDetails() {
 
     // -------------------------
     // MILK PRICES
-    // Different products can
-    // have different milk pricing
     // -------------------------
 
     const milkPrices = {
@@ -60,7 +88,6 @@ function ProductDetails() {
 
     // -------------------------
     // EXTRA PRICES
-    // Can be different per product
     // -------------------------
 
     const extraPrices = {
@@ -68,6 +95,10 @@ function ProductDetails() {
         oatMilk: product.extraPrices?.oatMilk ?? 0.80,
         caramel: product.extraPrices?.caramel ?? 0.60
     };
+
+    // -------------------------
+    // TOGGLE EXTRA
+    // -------------------------
 
     const toggleExtra = (extra) => {
         setExtras(prev => ({
@@ -83,7 +114,6 @@ function ProductDetails() {
     let unitPrice = Number(product.price);
 
     unitPrice += sizePrices[size];
-
     unitPrice += milkPrices[milk];
 
     if (extras.shot) {
@@ -101,7 +131,7 @@ function ProductDetails() {
     const totalPrice = unitPrice * quantity;
 
     // -------------------------
-    // ADD TO CART
+    // ADD / UPDATE CART
     // -------------------------
 
     const handleAddToCart = () => {
@@ -109,7 +139,6 @@ function ProductDetails() {
         const customizedProduct = {
             ...product,
 
-            // Unique customization information
             size,
             temperature,
             sugar,
@@ -121,13 +150,39 @@ function ProductDetails() {
                 caramel: extras.caramel
             },
 
-            // Final price PER item
+            // Price is PER ITEM
             price: unitPrice.toFixed(2),
 
             quantity
         };
 
-        addToCart(customizedProduct);
+        // Create unique ID for this exact customization
+        const customizationId = [
+            customizedProduct.name,
+            customizedProduct.size || "default",
+            customizedProduct.temperature || "default",
+            customizedProduct.sugar || "default",
+            customizedProduct.milk || "default",
+            customizedProduct.extras.extraShot,
+            customizedProduct.extras.oatMilk,
+            customizedProduct.extras.caramel
+        ].join("-");
+
+        customizedProduct.customizationId = customizationId;
+
+        // EDIT EXISTING CART ITEM
+        if (editMode) {
+
+            updateCartItem(
+                product.customizationId,
+                customizedProduct
+            );
+
+        } else {
+
+            // ADD NEW ITEM
+            addToCart(customizedProduct);
+        }
 
         navigate("/cart");
     };
@@ -181,6 +236,7 @@ function ProductDetails() {
                         <div className="choice-row">
 
                             {["Small", "Medium", "Large"].map(option => (
+
                                 <button
                                     key={option}
                                     className={
@@ -198,7 +254,9 @@ function ProductDetails() {
                                             : `+$${sizePrices[option].toFixed(2)}`
                                         }
                                     </small>
+
                                 </button>
+
                             ))}
 
                         </div>
@@ -214,6 +272,7 @@ function ProductDetails() {
                         <div className="choice-row">
 
                             {["Hot", "Iced"].map(option => (
+
                                 <button
                                     key={option}
                                     className={
@@ -223,6 +282,7 @@ function ProductDetails() {
                                     }
                                     onClick={() => setTemperature(option)}
                                 >
+
                                     <i
                                         className={
                                             option === "Hot"
@@ -232,7 +292,9 @@ function ProductDetails() {
                                     ></i>
 
                                     {option}
+
                                 </button>
+
                             ))}
 
                         </div>
@@ -248,6 +310,7 @@ function ProductDetails() {
                         <div className="choice-row">
 
                             {["Low", "Medium", "High", "No Sugar"].map(option => (
+
                                 <button
                                     key={option}
                                     className={
@@ -259,6 +322,7 @@ function ProductDetails() {
                                 >
                                     {option}
                                 </button>
+
                             ))}
 
                         </div>
@@ -274,6 +338,7 @@ function ProductDetails() {
                         <div className="choice-row">
 
                             {Object.keys(milkPrices).map(option => (
+
                                 <button
                                     key={option}
                                     className={
@@ -283,6 +348,7 @@ function ProductDetails() {
                                     }
                                     onClick={() => setMilk(option)}
                                 >
+
                                     <span>{option}</span>
 
                                     <small>
@@ -291,7 +357,9 @@ function ProductDetails() {
                                             : `+$${milkPrices[option].toFixed(2)}`
                                         }
                                     </small>
+
                                 </button>
+
                             ))}
 
                         </div>
@@ -400,14 +468,21 @@ function ProductDetails() {
 
                     </div>
 
-                    {/* ADD */}
+                    {/* ADD / UPDATE */}
 
                     <button
                         className="add-product-btn"
                         onClick={handleAddToCart}
                     >
-                        Add to Cart
-                        <i className="bi bi-cart-plus"></i>
+                        {editMode ? "Update Cart" : "Add to Cart"}
+
+                        <i
+                            className={
+                                editMode
+                                    ? "bi bi-check-lg"
+                                    : "bi bi-cart-plus"
+                            }
+                        ></i>
                     </button>
 
                 </div>

@@ -153,51 +153,94 @@ function Orders() {
 
                                     <div className="order-items">
 
-                                        {order.items.map((item) => (
+                                        {order.items.map((item, index) => (
+    <div className="order-item" key={index}>
 
-                                            <div
-                                                className="order-history-item"
-                                                key={item.name}
-                                            >
+        {/* IMAGE */}
+        <div className="order-item-image">
+            <img
+                src={item.image}
+                alt={item.name}
+            />
 
-                                                <div className="history-item-image">
+            <span className="order-item-quantity">
+                {item.quantity}
+            </span>
+        </div>
 
-                                                    <img
-                                                        src={item.image}
-                                                        alt={item.name}
-                                                    />
+        {/* DETAILS */}
+        <div className="order-item-details">
 
-                                                    <span>
-                                                        {item.quantity}
-                                                    </span>
+            <h3>{item.name}</h3>
 
-                                                </div>
+            <span className="order-item-category">
+                {item.category}
+            </span>
 
+            {/* CUSTOMIZATIONS */}
+            <div className="order-item-customization">
 
-                                                <div className="history-item-info">
+                {item.size && (
+                    <span>
+                        <i className="bi bi-cup"></i>
+                        {item.size}
+                    </span>
+                )}
 
-                                                    <strong>
-                                                        {item.name}
-                                                    </strong>
+                {item.temperature && (
+                    <span>
+                        <i
+                            className={
+                                item.temperature === "Hot"
+                                    ? "bi bi-cup-hot"
+                                    : "bi bi-snow"
+                            }
+                        ></i>
+                        {item.temperature}
+                    </span>
+                )}
 
-                                                    <span>
-                                                        {item.category}
-                                                    </span>
+                {item.sugar && (
+                    <span>
+                        {item.sugar} Sugar
+                    </span>
+                )}
 
-                                                </div>
+                {item.milk && (
+                    <span>
+                        {item.milk} Milk
+                    </span>
+                )}
 
+                {item.extras?.extraShot && (
+                    <span>
+                        + Extra Shot
+                    </span>
+                )}
 
-                                                <strong>
-                                                    $
-                                                    {(
-                                                        Number(item.price) *
-                                                        item.quantity
-                                                    ).toFixed(2)}
-                                                </strong>
+                {item.extras?.oatMilk && (
+                    <span>
+                        + Oat Milk
+                    </span>
+                )}
 
-                                            </div>
+                {item.extras?.caramel && (
+                    <span>
+                        + Caramel
+                    </span>
+                )}
 
-                                        ))}
+            </div>
+
+        </div>
+
+        {/* PRICE */}
+        <div className="order-item-price">
+            ${(Number(item.price) * item.quantity).toFixed(2)}
+        </div>
+
+    </div>
+))}
 
                                     </div>
 
