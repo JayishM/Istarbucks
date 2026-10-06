@@ -1,7 +1,9 @@
 import "./about.css";
 import coffeePour from "../../assets/coffee-pour.png";
+import { useNavigate } from "react-router-dom";
 
 function About() {
+    const navigate = useNavigate();
     return (
         <section className="about">
 
@@ -52,10 +54,7 @@ function About() {
 
                 </div>
 
-                <button className="about-btn">
-                    Learn More About Us
-                    <i className="bi bi-arrow-right"></i>
-                </button>
+                <button className="about-btn" onClick={() => navigate("/about")}>Learn More About Us<i className="bi bi-arrow-right"></i></button>
 
             </div>
 

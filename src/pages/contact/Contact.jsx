@@ -1,6 +1,5 @@
 import "./Contact.css";
 import Navbar from "../../components/navbar/navbar.jsx";
-import Footer from "../../components/footer/footer.jsx";
 
 function Contact() {
   return (
@@ -301,7 +300,6 @@ function Contact() {
 
         </section>
       </div>
-      <Footer />
     </>
   );
 }

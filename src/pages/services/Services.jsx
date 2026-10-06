@@ -170,7 +170,7 @@ function Services() {
                 </section>
 
             </div>
-            <Footer/>
+            <Footer/>   
         </>
     );
 }

@@ -6,7 +6,6 @@ import Navbar from "../../components/navbar/navbar.jsx";
 import cappuccino from "../../assets/capuchino.png";
 import espresso from "../../assets/espresso.png";
 import coffee from "../../assets/float.png";
-import Footer from "../../components/footer/footer.jsx";
 function Blog() {
   const [category, setCategory] = useState("All");
 
@@ -245,7 +244,6 @@ function Blog() {
         </section>
 
       </div>
-      <Footer/>
     </>
   );
 }

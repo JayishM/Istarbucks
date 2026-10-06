@@ -1,10 +1,21 @@
 import "./trending.css";
+import { useCart } from "../../context/CartContext";
 
 import cappuccino from "../../assets/capuchino.png";
 import float from "../../assets/float.png";
 import espresso from "../../assets/espresso.png";
 
 function DrinkCard({ image, rating, name, description, price }) {
+    const { addToCart } = useCart();
+
+    const product = {
+        name,
+        category: "Hot Coffee",
+        price,
+        rating,
+        image,
+        description
+    };
 
     return (
         <div className="drink-card">
@@ -14,7 +25,8 @@ function DrinkCard({ image, rating, name, description, price }) {
                 <img src={image} alt={name} />
 
                 <span className="rating">
-                    {rating} <i className="bi bi-star-fill"></i>
+                    {rating}
+                    <i className="bi bi-star-fill"></i>
                 </span>
 
             </div>
@@ -29,7 +41,10 @@ function DrinkCard({ image, rating, name, description, price }) {
 
                     <strong>${price}</strong>
 
-                    <i className="bi bi-plus-circle-fill add-icon"></i>
+                    <i
+                        className="bi bi-plus-circle-fill add-icon"
+                        onClick={() => addToCart(product)}
+                    ></i>
 
                 </div>
 
@@ -41,7 +56,6 @@ function DrinkCard({ image, rating, name, description, price }) {
 
 
 function Trending() {
-
     return (
         <div className="trending">
 

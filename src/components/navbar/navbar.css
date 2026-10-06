@@ -5,7 +5,7 @@
   top: 0;
   left: 0;
   z-index: 1000;
-
+  color:white;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -84,4 +84,41 @@
     padding: 10px 22px;
 
     font-weight: 600;
+}
+.cart-icon {
+    position: relative;
+    width: 35px;
+    height: 35px;
+    border: 1px solid #6f5b4c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.cart-count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+
+    min-width: 18px;
+    height: 18px;
+
+    padding: 0 4px;
+
+    border-radius: 50%;
+
+    background: #e68120;
+    color: #211006;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cart-icon {
+    cursor: pointer;
 }

@@ -11,7 +11,7 @@ import "./App.css";
 function App() {
     return (
         <div className="page">
-            <Navbar />
+            
 
             <Hero />
 
@@ -26,7 +26,6 @@ function App() {
             <About />
             <Reviews />
             <OrderCTA />
-            <Footer />
         </div>
     );
 }

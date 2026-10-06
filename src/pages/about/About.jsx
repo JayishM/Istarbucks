@@ -1,10 +1,9 @@
 import "./About.css";
 import Navbar from "../../components/navbar/navbar.jsx";
-
+import { useNavigate } from "react-router-dom";
 import coffee from "../../assets/capuchino.png";
-import Footer from "../../components/footer/footer.jsx";
 function About() {
-
+    const navigate = useNavigate();
     return (
         <>
             <Navbar />
@@ -100,12 +99,7 @@ function About() {
                             </div>
 
                         </div>
-
-
-                        <button className="about-button">
-                            Discover Our Story
-                            <i className="bi bi-arrow-right"></i>
-                        </button>
+                        <button className="about-button" onClick={() => navigate("/blog")}>Discover Our Story<i className="bi bi-arrow-right"></i></button>
 
                     </div>
 
@@ -193,7 +187,6 @@ function About() {
                 </section>
 
             </div>
-            <Footer/>
         </>
     );
 }

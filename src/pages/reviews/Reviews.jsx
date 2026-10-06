@@ -1,6 +1,5 @@
 import "./Reviews.css";
 import Navbar from "../../components/navbar/navbar.jsx";
-import Footer from "../../components/footer/footer.jsx";
 function Reviews() {
   const reviews = [
     {
@@ -177,7 +176,6 @@ function Reviews() {
         </section>
 
       </div>
-      <Footer/>
     </>
   );
 }
