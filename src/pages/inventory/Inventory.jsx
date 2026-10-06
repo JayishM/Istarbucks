@@ -1,0 +1,696 @@
+import { useEffect, useState } from "react";
+import "./Inventory.css";
+
+function Inventory() {
+
+    const [ingredients, setIngredients] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const [selectedIngredient, setSelectedIngredient] = useState(null);
+    const [restockAmount, setRestockAmount] = useState("");
+    const [restocking, setRestocking] = useState(false);
+
+
+    // ==========================================
+    // FETCH INVENTORY
+    // ==========================================
+
+    const fetchInventory = async () => {
+
+        try {
+
+            const response = await fetch(
+                "http://localhost:3000/api/inventory"
+            );
+
+            const data = await response.json();
+
+            setIngredients(data.ingredients || []);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to fetch inventory:",
+                error
+            );
+
+        } finally {
+
+            setLoading(false);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchInventory();
+    }, []);
+
+
+    // ==========================================
+    // STATUS
+    // ==========================================
+
+    const getStatus = (item) => {
+
+        if (
+            Number(item.quantity) <=
+            Number(item.low_stock_threshold)
+        ) {
+            return "Low Stock";
+        }
+
+        return "In Stock";
+    };
+
+
+    // ==========================================
+    // OPEN RESTOCK MODAL
+    // ==========================================
+
+    const openRestock = (ingredient) => {
+
+        setSelectedIngredient(ingredient);
+        setRestockAmount("");
+    };
+
+
+    // ==========================================
+    // CLOSE RESTOCK MODAL
+    // ==========================================
+
+    const closeRestock = () => {
+
+        if (restocking) return;
+
+        setSelectedIngredient(null);
+        setRestockAmount("");
+    };
+
+
+    // ==========================================
+    // RESTOCK
+    // ==========================================
+
+    const handleRestock = async () => {
+
+        const amount = Number(restockAmount);
+
+
+        if (!amount || amount <= 0) {
+
+            alert(
+                "Please enter a valid restock quantity."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            setRestocking(true);
+
+
+            const response = await fetch(
+                `http://localhost:3000/api/inventory/${selectedIngredient.id}/restock`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        quantity: amount
+                    })
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.message ||
+                    "Failed to restock"
+                );
+            }
+
+
+            // Refresh inventory
+            await fetchInventory();
+
+
+            // Close modal
+            setSelectedIngredient(null);
+            setRestockAmount("");
+
+
+        } catch (error) {
+
+            console.error(
+                "Restock error:",
+                error
+            );
+
+            alert(error.message);
+
+        } finally {
+
+            setRestocking(false);
+        }
+    };
+
+
+    // ==========================================
+    // LOADING
+    // ==========================================
+
+    if (loading) {
+
+        return (
+            <div className="inventory-page">
+
+                <div className="inventory-loading">
+                    Loading inventory...
+                </div>
+
+            </div>
+        );
+    }
+
+
+    // ==========================================
+    // PAGE
+    // ==========================================
+
+    return (
+        <div className="inventory-page">
+
+
+            {/* HEADER */}
+
+            <section className="inventory-header">
+
+                <div>
+
+                    <span className="inventory-label">
+                        ADMIN PANEL
+                    </span>
+
+                    <h1>
+                        Inventory
+                    </h1>
+
+                    <p>
+                        Monitor ingredient stock and
+                        inventory levels.
+                    </p>
+
+                </div>
+
+
+                <div className="inventory-summary">
+
+
+                    {/* TOTAL */}
+
+                    <div className="summary-card">
+
+                        <i className="bi bi-box-seam"></i>
+
+                        <div>
+
+                            <span>
+                                Total Ingredients
+                            </span>
+
+                            <strong>
+                                {ingredients.length}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    {/* LOW STOCK */}
+
+                    <div className="summary-card">
+
+                        <i className="bi bi-exclamation-triangle"></i>
+
+                        <div>
+
+                            <span>
+                                Low Stock
+                            </span>
+
+                            <strong>
+
+                                {
+                                    ingredients.filter(
+                                        item =>
+                                            Number(item.quantity) <=
+                                            Number(item.low_stock_threshold)
+                                    ).length
+                                }
+
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            {/* INVENTORY CARD */}
+
+            <section className="inventory-card">
+
+
+                <div className="inventory-card-header">
+
+                    <div>
+
+                        <h2>
+                            Ingredients
+                        </h2>
+
+                        <p>
+                            Current stock levels
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        className="refresh-btn"
+                        onClick={fetchInventory}
+                    >
+
+                        <i className="bi bi-arrow-clockwise"></i>
+
+                        Refresh
+
+                    </button>
+
+                </div>
+
+
+                {/* TABLE */}
+
+                <div className="inventory-table-wrapper">
+
+                    <table className="inventory-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    Ingredient
+                                </th>
+
+                                <th>
+                                    Quantity
+                                </th>
+
+                                <th>
+                                    Unit
+                                </th>
+
+                                <th>
+                                    Low Stock At
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {ingredients.map(
+                                (item, index) => {
+
+                                    const status =
+                                        getStatus(item);
+
+                                    const isLow =
+                                        status ===
+                                        "Low Stock";
+
+
+                                    return (
+
+                                        <tr key={item.id}>
+
+
+                                            {/* NUMBER */}
+
+                                            <td>
+                                                {index + 1}
+                                            </td>
+
+
+                                            {/* INGREDIENT */}
+
+                                            <td>
+
+                                                <div className="ingredient-name">
+
+                                                    <div className="ingredient-icon">
+
+                                                        <i className="bi bi-cup-hot"></i>
+
+                                                    </div>
+
+                                                    <strong>
+                                                        {item.name}
+                                                    </strong>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            {/* QUANTITY */}
+
+                                            <td>
+
+                                                <strong
+                                                    className={
+                                                        isLow
+                                                            ? "stock-low"
+                                                            : "stock-good"
+                                                    }
+                                                >
+
+                                                    {Number(
+                                                        item.quantity
+                                                    ).toLocaleString()}
+
+                                                </strong>
+
+                                            </td>
+
+
+                                            {/* UNIT */}
+
+                                            <td>
+                                                {item.unit}
+                                            </td>
+
+
+                                            {/* THRESHOLD */}
+
+                                            <td>
+
+                                                {Number(
+                                                    item.low_stock_threshold
+                                                ).toLocaleString()}
+
+                                            </td>
+
+
+                                            {/* STATUS */}
+
+                                            <td>
+
+                                                <span
+                                                    className={
+                                                        isLow
+                                                            ? "status low"
+                                                            : "status good"
+                                                    }
+                                                >
+
+                                                    <span></span>
+
+                                                    {status}
+
+                                                </span>
+
+                                            </td>
+
+
+                                            {/* ACTION */}
+
+                                            <td>
+
+                                                <button
+                                                    className="restock-btn"
+                                                    onClick={() =>
+                                                        openRestock(item)
+                                                    }
+                                                >
+
+                                                    <i className="bi bi-plus-lg"></i>
+
+                                                    Restock
+
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    );
+
+                                }
+                            )}
+
+                        </tbody>
+
+                    </table>
+
+
+                    {ingredients.length === 0 && (
+
+                        <div className="empty-inventory">
+
+                            <i className="bi bi-box"></i>
+
+                            <h3>
+                                No ingredients found
+                            </h3>
+
+                            <p>
+                                Your inventory is empty.
+                            </p>
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </section>
+
+
+            {/* =====================================
+                RESTOCK MODAL
+            ====================================== */}
+
+            {selectedIngredient && (
+
+                <div
+                    className="restock-overlay"
+                    onClick={closeRestock}
+                >
+
+                    <div
+                        className="restock-modal"
+                        onClick={(e) =>
+                            e.stopPropagation()
+                        }
+                    >
+
+
+                        {/* MODAL HEADER */}
+
+                        <div className="restock-modal-header">
+
+                            <div>
+
+                                <span>
+                                    INVENTORY
+                                </span>
+
+                                <h2>
+                                    Restock Ingredient
+                                </h2>
+
+                            </div>
+
+
+                            <button
+                                className="close-restock"
+                                onClick={closeRestock}
+                            >
+
+                                <i className="bi bi-x-lg"></i>
+
+                            </button>
+
+                        </div>
+
+
+                        {/* INGREDIENT INFO */}
+
+                        <div className="restock-ingredient">
+
+                            <div className="restock-icon">
+
+                                <i className="bi bi-box-seam"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <strong>
+                                    {selectedIngredient.name}
+                                </strong>
+
+                                <span>
+
+                                    Current stock:{" "}
+
+                                    {Number(
+                                        selectedIngredient.quantity
+                                    ).toLocaleString()}{" "}
+
+                                    {selectedIngredient.unit}
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* INPUT */}
+
+                        <label className="restock-label">
+
+                            Quantity to add
+
+                        </label>
+
+
+                        <div className="restock-input-wrapper">
+
+                            <input
+                                type="number"
+                                min="1"
+                                value={restockAmount}
+                                onChange={(e) =>
+                                    setRestockAmount(
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="Enter quantity"
+                                autoFocus
+                            />
+
+                            <span>
+                                {selectedIngredient.unit}
+                            </span>
+
+                        </div>
+
+
+                        {/* PREVIEW */}
+
+                        {Number(restockAmount) > 0 && (
+
+                            <div className="restock-preview">
+
+                                <span>
+                                    New stock
+                                </span>
+
+                                <strong>
+
+                                    {(
+                                        Number(
+                                            selectedIngredient.quantity
+                                        ) +
+                                        Number(restockAmount)
+                                    ).toLocaleString()}{" "}
+
+                                    {selectedIngredient.unit}
+
+                                </strong>
+
+                            </div>
+
+                        )}
+
+
+                        {/* BUTTONS */}
+
+                        <div className="restock-actions">
+
+                            <button
+                                className="cancel-restock"
+                                onClick={closeRestock}
+                                disabled={restocking}
+                            >
+                                Cancel
+                            </button>
+
+
+                            <button
+                                className="confirm-restock"
+                                onClick={handleRestock}
+                                disabled={restocking}
+                            >
+
+                                {restocking ? (
+                                    <>
+                                        <span className="restock-spinner"></span>
+                                        Restocking...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="bi bi-plus-lg"></i>
+                                        Restock
+                                    </>
+                                )}
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+        </div>
+    );
+}
+
+export default Inventory;

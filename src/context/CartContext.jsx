@@ -12,51 +12,57 @@ export function CartProvider({ children }) {
 
     const addToCart = (product) => {
 
-        const customizationId = [
-            product.name,
-            product.size || "default",
-            product.temperature || "default",
-            product.sugar || "default",
-            product.milk || "default",
-            product.extras?.extraShot || false,
-            product.extras?.oatMilk || false,
-            product.extras?.caramel || false
-        ].join("-");
+    const productId = product.product_id || product.id;
 
-        setCart((currentCart) => {
+    const customizationId = [
+        productId,
+        product.name,
+        product.size || "default",
+        product.temperature || "default",
+        product.sugar || "default",
+        product.milk || "default",
+        product.extras?.extraShot || false,
+        product.extras?.oatMilk || false,
+        product.extras?.caramel || false
+    ].join("-");
 
-            const existing = currentCart.find(
-                item =>
-                    item.customizationId === customizationId
+    setCart((currentCart) => {
+
+        const existing = currentCart.find(
+            item => item.customizationId === customizationId
+        );
+
+        if (existing) {
+
+            return currentCart.map(item =>
+                item.customizationId === customizationId
+                    ? {
+                        ...item,
+                        quantity:
+                            item.quantity +
+                            (product.quantity || 1)
+                    }
+                    : item
             );
 
-            // Same product + same customization
-            // → increase quantity
-            if (existing) {
+        }
 
-                return currentCart.map(item =>
-                    item.customizationId === customizationId
-                        ? {
-                            ...item,
-                            quantity:
-                                item.quantity +
-                                (product.quantity || 1)
-                        }
-                        : item
-                );
+        return [
+            ...currentCart,
+            {
+                ...product,
+
+                // IMPORTANT
+                product_id: productId,
+
+                quantity: product.quantity || 1,
+
+                customizationId
             }
+        ];
 
-            // New product/customization
-            return [
-                ...currentCart,
-                {
-                    ...product,
-                    customizationId,
-                    quantity: product.quantity || 1
-                }
-            ];
-        });
-    };
+    });
+};
 
 
     // =========================

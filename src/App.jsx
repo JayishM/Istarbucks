@@ -15,6 +15,7 @@ import OrderSuccess from "./pages/order-success/OrderSuccess";
 import Orders from "./pages/orders/Orders";
 import ProductDetails from "./pages/product-details/ProductDetails";
 import Register from "./pages/register/Register";
+import Inventory from "./pages/inventory/Inventory";
 import Login from "./pages/login/Login";
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
         <Route path="/product" element={<ProductDetails />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/inventory" element={<Inventory />} />
       </Routes>
 
       <Footer />
