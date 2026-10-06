@@ -1,21 +1,57 @@
 import "./OrderSuccess.css";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "../../context/CartContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function OrderSuccess() {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const order = location.state?.order;
+
+    // If no order information was passed
+    if (!order) {
+        return (
+            <div className="success-page">
+                <div className="success-card">
+
+                    <div className="success-icon">
+                        <i className="bi bi-receipt"></i>
+                    </div>
+
+                    <h1>
+                        No Order <strong>Found</strong>
+                    </h1>
+
+                    <p className="success-message">
+                        We couldn't find your order details.
+                    </p>
+
+                    <button
+                        className="primary-success-btn"
+                        onClick={() => navigate("/menu")}
+                    >
+                        Go to Menu
+                        <i className="bi bi-arrow-right"></i>
+                    </button>
+
+                </div>
+            </div>
+        );
+    }
 
     const {
-        cart,
-        cartTotal
-    } = useCart();
+        id,
+        items = [],
+        subtotal = 0,
+        delivery = 0,
+        tax = 0,
+        total = 0
+    } = order;
 
-    const deliveryFee = cart.length > 0 ? 2.00 : 0;
-    const tax = cartTotal * 0.08;
-    const grandTotal = cartTotal + deliveryFee + tax;
-
-    const orderNumber =
-        "IST" + Math.floor(1000 + Math.random() * 9000);
+    // Total number of items
+    const itemCount = items.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+    );
 
     return (
         <div className="success-page">
@@ -46,27 +82,29 @@ function OrderSuccess() {
 
                 <div className="order-number">
                     <span>ORDER NUMBER</span>
-                    <strong>#{orderNumber}</strong>
+
+                    <strong>
+                        #{id}
+                    </strong>
                 </div>
 
 
                 {/* ITEMS */}
 
-                {cart.length > 0 && (
+                {items.length > 0 && (
                     <div className="success-items">
 
                         <div className="success-items-heading">
                             <span>YOUR ITEMS</span>
+
                             <span>
-                                {cart.reduce(
-                                    (total, item) =>
-                                        total + item.quantity,
-                                    0
-                                )} items
+                                {itemCount}{" "}
+                                {itemCount === 1 ? "item" : "items"}
                             </span>
                         </div>
 
-                        {cart.map(item => (
+
+                        {items.map((item) => (
 
                             <div
                                 className="success-item"
@@ -74,6 +112,7 @@ function OrderSuccess() {
                             >
 
                                 <div className="success-item-image">
+
                                     <img
                                         src={item.image}
                                         alt={item.name}
@@ -82,12 +121,22 @@ function OrderSuccess() {
                                     <span>
                                         {item.quantity}
                                     </span>
+
                                 </div>
 
+
                                 <div className="success-item-info">
-                                    <h3>{item.name}</h3>
-                                    <p>{item.category}</p>
+
+                                    <h3>
+                                        {item.name}
+                                    </h3>
+
+                                    <p>
+                                        {item.category}
+                                    </p>
+
                                 </div>
+
 
                                 <strong>
                                     $
@@ -111,32 +160,42 @@ function OrderSuccess() {
 
                     <div>
                         <span>Subtotal</span>
+
                         <strong>
-                            ${cartTotal.toFixed(2)}
+                            ${Number(subtotal).toFixed(2)}
                         </strong>
                     </div>
+
 
                     <div>
                         <span>Delivery</span>
+
                         <strong>
-                            ${deliveryFee.toFixed(2)}
+                            ${Number(delivery).toFixed(2)}
                         </strong>
                     </div>
+
 
                     <div>
                         <span>Tax</span>
+
                         <strong>
-                            ${tax.toFixed(2)}
+                            ${Number(tax).toFixed(2)}
                         </strong>
                     </div>
 
+
                     <div className="total-line"></div>
 
+
                     <div className="final-total">
+
                         <span>Total</span>
+
                         <strong>
-                            ${grandTotal.toFixed(2)}
+                            ${Number(total).toFixed(2)}
                         </strong>
+
                     </div>
 
                 </div>
@@ -151,6 +210,7 @@ function OrderSuccess() {
                     </div>
 
                     <div>
+
                         <strong>
                             Your order is being prepared
                         </strong>
@@ -158,6 +218,7 @@ function OrderSuccess() {
                         <p>
                             Estimated delivery: 25–35 minutes
                         </p>
+
                     </div>
 
                 </div>
@@ -172,8 +233,10 @@ function OrderSuccess() {
                         onClick={() => navigate("/menu")}
                     >
                         Continue Shopping
+
                         <i className="bi bi-arrow-right"></i>
                     </button>
+
 
                     <button
                         className="secondary-success-btn"

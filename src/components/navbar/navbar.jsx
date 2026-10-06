@@ -30,7 +30,12 @@ function Navbar() {
 
                 <div className="nav-actions">
 
-                    <i className="bi bi-person-circle"></i>
+                    <div
+                        className="profile-icon"
+                        onClick={() => navigate("/profile")}
+                    >
+                        <i className="bi bi-person-circle"></i>
+                    </div>
 
                     <div
                         className="search-icon"

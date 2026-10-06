@@ -122,3 +122,13 @@
 .cart-icon {
     cursor: pointer;
 }
+.profile-icon {
+    font-size: 23px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.profile-icon:hover {
+    color: #e68120;
+}

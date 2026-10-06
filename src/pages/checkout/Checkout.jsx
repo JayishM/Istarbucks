@@ -8,7 +8,9 @@ function Checkout() {
 
     const {
         cart,
-        cartTotal
+        cartTotal,
+        clearCart,
+        saveOrder
     } = useCart();
 
     const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -18,15 +20,40 @@ function Checkout() {
     const grandTotal = cartTotal + deliveryFee + tax;
 
     const handleSubmit = (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (cart.length === 0) {
-            navigate("/menu");
-            return;
-        }
+    if (cart.length === 0) {
+        navigate("/menu");
+        return;
+    }
 
-        navigate("/order-success");
+    const order = {
+        id: "IST" + Math.floor(1000 + Math.random() * 9000),
+
+        items: cart,
+
+        subtotal: cartTotal,
+        delivery: deliveryFee,
+        tax: tax,
+        total: grandTotal,
+
+        paymentMethod: paymentMethod,
+
+        date: new Date().toISOString(),
+
+        status: "Preparing"
     };
+
+    saveOrder(order);
+
+    clearCart();
+
+    navigate("/order-success", {
+        state: {
+            order
+        }
+    });
+};
 
     if (cart.length === 0) {
         return (

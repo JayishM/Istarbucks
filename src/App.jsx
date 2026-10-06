@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import Profile from "./pages/profile/Profile";
 import Navbar from "./components/navbar/navbar.jsx";
 import Footer from "./components/footer/footer.jsx";
 import Cart from "./pages/cart/Cart";
@@ -12,6 +12,9 @@ import Blog from "./pages/blog/Blog";
 import Contact from "./pages/contact/Contact";
 import Checkout from "./pages/checkout/Checkout";
 import OrderSuccess from "./pages/order-success/OrderSuccess";
+import Orders from "./pages/orders/Orders";
+import ProductDetails from "./pages/product-details/ProductDetails";
+
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/product" element={<ProductDetails />} />
       </Routes>
 
       <Footer />

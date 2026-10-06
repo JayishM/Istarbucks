@@ -5,68 +5,124 @@ import { useCart } from "../../context/CartContext";
 import cappuccino from "../../assets/capuchino.png";
 import float from "../../assets/float.png";
 import espresso from "../../assets/espresso.png";
+import { useNavigate } from "react-router-dom";
 
 function Menu() {
   const [category, setCategory] = useState("All");
 
   const { addToCart } = useCart();
-
+  const navigate = useNavigate();
   const products = [
     {
-      name: "Cappuccino",
-      category: "Hot Coffee",
-      price: "4.50",
-      rating: "4.9",
-      image: cappuccino,
-      description:
-        "Rich espresso with steamed milk and creamy foam."
+        name: "Cappuccino",
+        category: "Hot Coffee",
+        price: "4.50",
+        rating: "4.9",
+        image: cappuccino,
+        description:
+            "Rich espresso with steamed milk and creamy foam.",
+
+        milkPrices: {
+            Oat: 0.80,
+            Almond: 0.90,
+            Soy: 0.70
+        },
+
+        extraPrices: {
+            shot: 1.00,
+            oatMilk: 0.80,
+            caramel: 0.60
+        }
     },
+
     {
-      name: "Latte",
-      category: "Hot Coffee",
-      price: "4.90",
-      rating: "5.0",
-      image: float,
-      description:
-        "Smooth espresso blended with creamy steamed milk."
+        name: "Latte",
+        category: "Hot Coffee",
+        price: "4.90",
+        rating: "5.0",
+        image: float,
+        description:
+            "Smooth espresso blended with creamy steamed milk.",
+
+        milkPrices: {
+            Oat: 0.90,
+            Almond: 1.00,
+            Soy: 0.80
+        },
+
+        extraPrices: {
+            shot: 1.20,
+            oatMilk: 0.90,
+            caramel: 0.70
+        }
     },
+
     {
-      name: "Espresso",
-      category: "Hot Coffee",
-      price: "3.50",
-      rating: "4.7",
-      image: espresso,
-      description:
-        "Bold and intense espresso with a rich aroma."
+        name: "Espresso",
+        category: "Hot Coffee",
+        price: "3.50",
+        rating: "4.7",
+        image: espresso,
+        description:
+            "Bold and intense espresso with a rich aroma.",
+
+        milkPrices: {
+            Oat: 0.70,
+            Almond: 0.80,
+            Soy: 0.60
+        },
+
+        extraPrices: {
+            shot: 1.20,
+            oatMilk: 0.70,
+            caramel: 0.50
+        }
     },
+
     {
-      name: "Mocha",
-      category: "Hot Coffee",
-      price: "5.20",
-      rating: "4.8",
-      image: cappuccino,
-      description:
-        "Espresso combined with chocolate and steamed milk."
+        name: "Mocha",
+        category: "Hot Coffee",
+        price: "5.20",
+        rating: "4.8",
+        image: cappuccino,
+        description:
+            "Espresso combined with chocolate and steamed milk.",
+
+        milkPrices: {
+            Oat: 1.00,
+            Almond: 1.10,
+            Soy: 0.90
+        },
+
+        extraPrices: {
+            shot: 1.30,
+            oatMilk: 1.00,
+            caramel: 0.70
+        }
     },
+
     {
-      name: "Americano",
-      category: "Hot Coffee",
-      price: "3.90",
-      rating: "4.6",
-      image: espresso,
-      description:
-        "Espresso diluted with hot water for a smooth finish."
-    },
-    {
-      name: "Iced Coffee",
-      category: "Cold Coffee",
-      price: "5.00",
-      rating: "4.9",
-      image: float,
-      description:
-        "Refreshing cold coffee with a smooth creamy finish."
+        name: "Americano",
+        category: "Hot Coffee",
+        price: "3.90",
+        rating: "4.6",
+        image: espresso,
+        description:
+            "Espresso diluted with hot water for a smooth finish.",
+
+        milkPrices: {
+            Oat: 0.80,
+            Almond: 0.90,
+            Soy: 0.70
+        },
+
+        extraPrices: {
+            shot: 1.00,
+            oatMilk: 0.80,
+            caramel: 0.60
+        }
     }
-  ];
+];
 
   const filteredProducts =
     category === "All"
@@ -126,8 +182,11 @@ function Menu() {
         {filteredProducts.map((product) => (
 
           <div
-            className="menu-card"
-            key={product.name}
+              className="menu-card"
+              key={product.name}
+              onClick={() => navigate("/product", {
+                  state: { product }
+              })}
           >
 
             {/* IMAGE */}
@@ -170,8 +229,11 @@ function Menu() {
                 </strong>
 
                 <button
-                  onClick={() => addToCart(product)}
-                  title="Add to cart"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                    }}
+                    title="Add to cart"
                 >
                   <i className="bi bi-plus"></i>
                 </button>
