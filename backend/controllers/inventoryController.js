@@ -1,24 +1,30 @@
 const pool = require("../config/db");
 
-// GET ALL INVENTORY
+
+// ==========================================
+// GET INVENTORY
+// ==========================================
+
 const getInventory = async (req, res) => {
     try {
-        const [ingredients] = await pool.execute(
-            `
+
+        const [ingredients] = await pool.execute(`
             SELECT
                 id,
                 name,
-                unit,
                 quantity,
+                unit,
                 low_stock_threshold
             FROM ingredients
-            ORDER BY id ASC
-            `
-        );
+            ORDER BY name ASC
+        `);
 
-        res.json({ ingredients });
+        res.json({
+            ingredients
+        });
 
     } catch (error) {
+
         console.error("Get inventory error:", error);
 
         res.status(500).json({
@@ -28,139 +34,54 @@ const getInventory = async (req, res) => {
 };
 
 
-// UPDATE INVENTORY
-const updateInventory = async (req, res) => {
-    const connection = await pool.getConnection();
-
-    try {
-        const { id } = req.params;
-        const { quantity, low_stock_threshold } = req.body;
-
-        if (
-            quantity === undefined ||
-            low_stock_threshold === undefined
-        ) {
-            return res.status(400).json({
-                message:
-                    "Quantity and low stock threshold are required"
-            });
-        }
-
-        await connection.beginTransaction();
-
-        // Get old quantity
-        const [rows] = await connection.execute(
-            `
-            SELECT quantity
-            FROM ingredients
-            WHERE id = ?
-            FOR UPDATE
-            `,
-            [id]
-        );
-
-        if (rows.length === 0) {
-            await connection.rollback();
-
-            return res.status(404).json({
-                message: "Ingredient not found"
-            });
-        }
-
-        const oldQuantity = Number(rows[0].quantity);
-        const newQuantity = Number(quantity);
-
-        // Update inventory
-        await connection.execute(
-            `
-            UPDATE ingredients
-            SET
-                quantity = ?,
-                low_stock_threshold = ?
-            WHERE id = ?
-            `,
-            [newQuantity, low_stock_threshold, id]
-        );
-
-        // Record adjustment only if quantity changed
-        if (oldQuantity !== newQuantity) {
-
-            const difference = newQuantity - oldQuantity;
-
-            await connection.execute(
-                `
-                INSERT INTO inventory_transactions
-                (
-                    ingredient_id,
-                    type,
-                    quantity,
-                    note
-                )
-                VALUES (?, 'ADJUSTMENT', ?, ?)
-                `,
-                [
-                    id,
-                    difference,
-                    `Manual stock adjustment: ${oldQuantity} → ${newQuantity}`
-                ]
-            );
-        }
-
-        await connection.commit();
-
-        res.json({
-            message: "Inventory updated successfully"
-        });
-
-    } catch (error) {
-
-        await connection.rollback();
-
-        console.error("Update inventory error:", error);
-
-        res.status(500).json({
-            message: "Failed to update inventory"
-        });
-
-    } finally {
-        connection.release();
-    }
-};
-
-
+// ==========================================
 // RESTOCK INGREDIENT
+// ==========================================
+
 const restockIngredient = async (req, res) => {
 
+    const ingredientId = Number(req.params.id);
+    const amount = Number(req.body.quantity);
+
+    if (!ingredientId) {
+        return res.status(400).json({
+            message: "Invalid ingredient ID"
+        });
+    }
+
+    if (!amount || amount <= 0) {
+        return res.status(400).json({
+            message: "Restock quantity must be greater than 0"
+        });
+    }
+
     const connection = await pool.getConnection();
 
     try {
 
-        const { id } = req.params;
-        const { quantity } = req.body;
-
-        const amount = Number(quantity);
-
-        if (!amount || amount <= 0) {
-            return res.status(400).json({
-                message:
-                    "Restock quantity must be greater than 0"
-            });
-        }
-
         await connection.beginTransaction();
 
-        // Check ingredient exists
-        const [rows] = await connection.execute(
+
+        // ------------------------------------------
+        // CHECK INGREDIENT
+        // ------------------------------------------
+
+        const [ingredients] = await connection.execute(
             `
-            SELECT id
+            SELECT
+                id,
+                name,
+                quantity,
+                unit
             FROM ingredients
             WHERE id = ?
             FOR UPDATE
             `,
-            [id]
+            [ingredientId]
         );
 
-        if (rows.length === 0) {
+
+        if (ingredients.length === 0) {
 
             await connection.rollback();
 
@@ -169,17 +90,31 @@ const restockIngredient = async (req, res) => {
             });
         }
 
-        // Add stock
+
+        const ingredient = ingredients[0];
+
+
+        // ------------------------------------------
+        // ADD STOCK
+        // ------------------------------------------
+
         await connection.execute(
             `
             UPDATE ingredients
             SET quantity = quantity + ?
             WHERE id = ?
             `,
-            [amount, id]
+            [
+                amount,
+                ingredientId
+            ]
         );
 
-        // Record transaction
+
+        // ------------------------------------------
+        // RECORD TRANSACTION
+        // ------------------------------------------
+
         await connection.execute(
             `
             INSERT INTO inventory_transactions
@@ -187,22 +122,46 @@ const restockIngredient = async (req, res) => {
                 ingredient_id,
                 type,
                 quantity,
+                reference_id,
                 note
             )
-            VALUES (?, 'RESTOCK', ?, ?)
+            VALUES (?, 'RESTOCK', ?, NULL, ?)
             `,
             [
-                id,
+                ingredientId,
                 amount,
-                `Restocked ${amount} units`
+                `Restocked ${amount} ${ingredient.unit} of ${ingredient.name}`
             ]
         );
 
+
+        // ------------------------------------------
+        // GET UPDATED STOCK
+        // ------------------------------------------
+
+        const [updated] = await connection.execute(
+            `
+            SELECT
+                id,
+                name,
+                quantity,
+                unit,
+                low_stock_threshold
+            FROM ingredients
+            WHERE id = ?
+            `,
+            [ingredientId]
+        );
+
+
         await connection.commit();
 
+
         res.json({
-            message: "Ingredient restocked successfully"
+            message: "Inventory restocked successfully",
+            ingredient: updated[0]
         });
+
 
     } catch (error) {
 
@@ -211,45 +170,165 @@ const restockIngredient = async (req, res) => {
         console.error("Restock error:", error);
 
         res.status(500).json({
-            message:
-                "Failed to restock ingredient"
+            message: error.message || "Failed to restock inventory"
         });
 
     } finally {
+
         connection.release();
     }
 };
 
 
-// GET TRANSACTION HISTORY
+// ==========================================
+// UPDATE INGREDIENT DETAILS
+// ==========================================
+
+const updateIngredient = async (req, res) => {
+
+    const ingredientId = Number(req.params.id);
+
+    if (!ingredientId) {
+        return res.status(400).json({
+            message: "Invalid ingredient ID"
+        });
+    }
+
+
+    const {
+        name,
+        unit,
+        low_stock_threshold
+    } = req.body;
+
+
+    if (
+        name === undefined &&
+        unit === undefined &&
+        low_stock_threshold === undefined
+    ) {
+        return res.status(400).json({
+            message: "Nothing to update"
+        });
+    }
+
+
+    try {
+
+        const fields = [];
+        const values = [];
+
+
+        if (name !== undefined) {
+            fields.push("name = ?");
+            values.push(name);
+        }
+
+
+        if (unit !== undefined) {
+            fields.push("unit = ?");
+            values.push(unit);
+        }
+
+
+        if (low_stock_threshold !== undefined) {
+
+            const threshold = Number(low_stock_threshold);
+
+            if (threshold < 0) {
+                return res.status(400).json({
+                    message: "Threshold cannot be negative"
+                });
+            }
+
+            fields.push("low_stock_threshold = ?");
+            values.push(threshold);
+        }
+
+
+        values.push(ingredientId);
+
+
+        const [result] = await pool.execute(
+            `
+            UPDATE ingredients
+            SET ${fields.join(", ")}
+            WHERE id = ?
+            `,
+            values
+        );
+
+
+        if (result.affectedRows === 0) {
+
+            return res.status(404).json({
+                message: "Ingredient not found"
+            });
+        }
+
+
+        const [updated] = await pool.execute(
+            `
+            SELECT
+                id,
+                name,
+                quantity,
+                unit,
+                low_stock_threshold
+            FROM ingredients
+            WHERE id = ?
+            `,
+            [ingredientId]
+        );
+
+
+        res.json({
+            message: "Ingredient updated successfully",
+            ingredient: updated[0]
+        });
+
+
+    } catch (error) {
+
+        console.error("Update inventory error:", error);
+
+        res.status(500).json({
+            message: "Failed to update ingredient"
+        });
+    }
+};
+
+
+// ==========================================
+// GET INVENTORY TRANSACTIONS
+// ==========================================
+
 const getTransactions = async (req, res) => {
 
     try {
 
-        const [transactions] = await pool.execute(
-            `
+        const [transactions] = await pool.execute(`
             SELECT
-                t.id,
-                t.ingredient_id,
+                it.id,
+                it.ingredient_id,
                 i.name AS ingredient_name,
                 i.unit,
-                t.type,
-                t.quantity,
-                t.reference_id,
-                t.note,
-                t.created_at
-            FROM inventory_transactions t
-
+                it.type,
+                it.quantity,
+                it.reference_id,
+                it.note,
+                it.created_at
+            FROM inventory_transactions it
             JOIN ingredients i
-                ON t.ingredient_id = i.id
+                ON it.ingredient_id = i.id
+            ORDER BY it.created_at DESC
+        `);
 
-            ORDER BY t.created_at DESC, t.id DESC
-            `
-        );
 
         res.json({
             transactions
         });
+
 
     } catch (error) {
 
@@ -259,8 +338,7 @@ const getTransactions = async (req, res) => {
         );
 
         res.status(500).json({
-            message:
-                "Failed to fetch transaction history"
+            message: "Failed to fetch inventory history"
         });
     }
 };
@@ -268,7 +346,7 @@ const getTransactions = async (req, res) => {
 
 module.exports = {
     getInventory,
-    updateInventory,
     restockIngredient,
+    updateIngredient,
     getTransactions
 };

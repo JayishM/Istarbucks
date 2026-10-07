@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import "./Inventory.css";
 
 function Inventory() {
-
     // ==========================================
     // STATE
     // ==========================================
@@ -25,8 +24,8 @@ function Inventory() {
     // ==========================================
 
     const fetchInventory = async () => {
-
         try {
+            setLoading(true);
 
             const response = await fetch(
                 "http://localhost:3000/api/inventory"
@@ -34,19 +33,29 @@ function Inventory() {
 
             const data = await response.json();
 
-            setIngredients(data.ingredients || []);
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Failed to fetch inventory"
+                );
+            }
+
+            // Backend currently returns an array.
+            // This also supports { ingredients: [...] }
+            // just in case the backend format changes.
+            const inventoryData = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.ingredients)
+                    ? data.ingredients
+                    : [];
+
+            setIngredients(inventoryData);
 
         } catch (error) {
-
-            console.error(
-                "Failed to fetch inventory:",
-                error
-            );
+            console.error("Failed to fetch inventory:", error);
+            setIngredients([]);
 
         } finally {
-
             setLoading(false);
-
         }
     };
 
@@ -56,9 +65,7 @@ function Inventory() {
     // ==========================================
 
     const fetchTransactions = async () => {
-
         try {
-
             setHistoryLoading(true);
 
             const response = await fetch(
@@ -74,21 +81,28 @@ function Inventory() {
                 );
             }
 
-            setTransactions(data.transactions || []);
+            // Backend currently returns an array.
+            // Also supports { transactions: [...] }
+            const transactionData = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.transactions)
+                    ? data.transactions
+                    : [];
+
+            setTransactions(transactionData);
 
         } catch (error) {
-
             console.error(
                 "Failed to fetch transaction history:",
                 error
             );
 
+            setTransactions([]);
+
             alert(error.message);
 
         } finally {
-
             setHistoryLoading(false);
-
         }
     };
 
@@ -98,11 +112,8 @@ function Inventory() {
     // ==========================================
 
     const handleShowHistory = () => {
-
         setShowHistory(true);
-
         fetchTransactions();
-
     };
 
 
@@ -111,9 +122,7 @@ function Inventory() {
     // ==========================================
 
     const handleCloseHistory = () => {
-
         setShowHistory(false);
-
     };
 
 
@@ -122,9 +131,7 @@ function Inventory() {
     // ==========================================
 
     useEffect(() => {
-
         fetchInventory();
-
     }, []);
 
 
@@ -133,18 +140,14 @@ function Inventory() {
     // ==========================================
 
     const getStatus = (item) => {
-
         if (
             Number(item.quantity) <=
             Number(item.low_stock_threshold)
         ) {
-
             return "Low Stock";
-
         }
 
         return "In Stock";
-
     };
 
 
@@ -153,10 +156,8 @@ function Inventory() {
     // ==========================================
 
     const openRestock = (ingredient) => {
-
         setSelectedIngredient(ingredient);
         setRestockAmount("");
-
     };
 
 
@@ -165,12 +166,10 @@ function Inventory() {
     // ==========================================
 
     const closeRestock = () => {
-
         if (restocking) return;
 
         setSelectedIngredient(null);
         setRestockAmount("");
-
     };
 
 
@@ -179,21 +178,16 @@ function Inventory() {
     // ==========================================
 
     const handleRestock = async () => {
+        if (!selectedIngredient) return;
 
         const amount = Number(restockAmount);
 
         if (!amount || amount <= 0) {
-
-            alert(
-                "Please enter a valid restock quantity."
-            );
-
+            alert("Please enter a valid restock quantity.");
             return;
         }
 
-
         try {
-
             setRestocking(true);
 
             const response = await fetch(
@@ -202,8 +196,7 @@ function Inventory() {
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json"
                     },
 
                     body: JSON.stringify({
@@ -212,52 +205,60 @@ function Inventory() {
                 }
             );
 
-
             const data = await response.json();
 
-
             if (!response.ok) {
-
                 throw new Error(
-                    data.message ||
-                    "Failed to restock"
+                    data.message || "Failed to restock"
                 );
-
             }
-
 
             // Refresh inventory
             await fetchInventory();
-
 
             // Close modal
             setSelectedIngredient(null);
             setRestockAmount("");
 
-
-            // If history has already been opened,
-            // refresh it as well.
+            // Refresh history if already open
             if (showHistory) {
                 await fetchTransactions();
             }
 
-
         } catch (error) {
-
-            console.error(
-                "Restock error:",
-                error
-            );
-
+            console.error("Restock error:", error);
             alert(error.message);
 
         } finally {
-
             setRestocking(false);
-
         }
-
     };
+
+
+    // ==========================================
+    // SAFE ARRAYS
+    // ==========================================
+    // These guarantee that .map(), .filter()
+    // and .length can never crash the page.
+
+    const safeIngredients = Array.isArray(ingredients)
+        ? ingredients
+        : [];
+
+    const safeTransactions = Array.isArray(transactions)
+        ? transactions
+        : [];
+
+
+    // ==========================================
+    // LOW STOCK COUNT
+    // ==========================================
+
+    const lowStockCount = safeIngredients.filter(
+        (item) =>
+            Number(item.quantity) <=
+            Number(item.low_stock_threshold)
+    ).length;
 
 
     // ==========================================
@@ -265,21 +266,13 @@ function Inventory() {
     // ==========================================
 
     if (loading) {
-
         return (
-
             <div className="inventory-page">
-
                 <div className="inventory-loading">
-
                     Loading inventory...
-
                 </div>
-
             </div>
-
         );
-
     }
 
 
@@ -288,9 +281,7 @@ function Inventory() {
     // ==========================================
 
     return (
-
         <div className="inventory-page">
-
 
             {/* ==================================
                 HEADER
@@ -299,7 +290,6 @@ function Inventory() {
             <section className="inventory-header">
 
                 <div>
-
                     <span className="inventory-label">
                         ADMIN PANEL
                     </span>
@@ -312,14 +302,12 @@ function Inventory() {
                         Monitor ingredient stock and
                         inventory levels.
                     </p>
-
                 </div>
 
 
                 {/* SUMMARY */}
 
                 <div className="inventory-summary">
-
 
                     {/* TOTAL */}
 
@@ -328,15 +316,13 @@ function Inventory() {
                         <i className="bi bi-box-seam"></i>
 
                         <div>
-
                             <span>
                                 Total Ingredients
                             </span>
 
                             <strong>
-                                {ingredients.length}
+                                {safeIngredients.length}
                             </strong>
-
                         </div>
 
                     </div>
@@ -349,27 +335,16 @@ function Inventory() {
                         <i className="bi bi-exclamation-triangle"></i>
 
                         <div>
-
                             <span>
                                 Low Stock
                             </span>
 
                             <strong>
-
-                                {
-                                    ingredients.filter(
-                                        item =>
-                                            Number(item.quantity) <=
-                                            Number(item.low_stock_threshold)
-                                    ).length
-                                }
-
+                                {lowStockCount}
                             </strong>
-
                         </div>
 
                     </div>
-
 
                 </div>
 
@@ -382,13 +357,11 @@ function Inventory() {
 
             <section className="inventory-card">
 
-
                 {/* CARD HEADER */}
 
                 <div className="inventory-card-header">
 
                     <div>
-
                         <h2>
                             Ingredients
                         </h2>
@@ -396,7 +369,6 @@ function Inventory() {
                         <p>
                             Current stock levels
                         </p>
-
                     </div>
 
 
@@ -416,11 +388,9 @@ function Inventory() {
                             className="history-btn"
                             onClick={handleShowHistory}
                         >
-
                             <i className="bi bi-clock-history"></i>
 
                             History
-
                         </button>
 
 
@@ -430,11 +400,9 @@ function Inventory() {
                             className="refresh-btn"
                             onClick={fetchInventory}
                         >
-
                             <i className="bi bi-arrow-clockwise"></i>
 
                             Refresh
-
                         </button>
 
                     </div>
@@ -489,21 +457,20 @@ function Inventory() {
 
                         <tbody>
 
-                            {ingredients.map(
+                            {safeIngredients.map(
                                 (item, index) => {
 
                                     const status =
                                         getStatus(item);
 
                                     const isLow =
-                                        status ===
-                                        "Low Stock";
-
+                                        status === "Low Stock";
 
                                     return (
 
-                                        <tr key={item.id}>
-
+                                        <tr
+                                            key={item.id}
+                                        >
 
                                             {/* NUMBER */}
 
@@ -544,11 +511,9 @@ function Inventory() {
                                                             : "stock-good"
                                                     }
                                                 >
-
                                                     {Number(
                                                         item.quantity
                                                     ).toLocaleString()}
-
                                                 </strong>
 
                                             </td>
@@ -564,11 +529,9 @@ function Inventory() {
                                             {/* THRESHOLD */}
 
                                             <td>
-
                                                 {Number(
                                                     item.low_stock_threshold
                                                 ).toLocaleString()}
-
                                             </td>
 
 
@@ -583,7 +546,6 @@ function Inventory() {
                                                             : "status good"
                                                     }
                                                 >
-
                                                     <span></span>
 
                                                     {status}
@@ -603,20 +565,16 @@ function Inventory() {
                                                         openRestock(item)
                                                     }
                                                 >
-
                                                     <i className="bi bi-plus-lg"></i>
 
                                                     Restock
-
                                                 </button>
 
                                             </td>
 
-
                                         </tr>
 
                                     );
-
                                 }
                             )}
 
@@ -627,7 +585,7 @@ function Inventory() {
 
                     {/* EMPTY */}
 
-                    {ingredients.length === 0 && (
+                    {safeIngredients.length === 0 && (
 
                         <div className="empty-inventory">
 
@@ -668,7 +626,6 @@ function Inventory() {
                         }
                     >
 
-
                         {/* MODAL HEADER */}
 
                         <div className="restock-modal-header">
@@ -689,10 +646,9 @@ function Inventory() {
                             <button
                                 className="close-restock"
                                 onClick={closeRestock}
+                                disabled={restocking}
                             >
-
                                 <i className="bi bi-x-lg"></i>
-
                             </button>
 
                         </div>
@@ -703,11 +659,8 @@ function Inventory() {
                         <div className="restock-ingredient">
 
                             <div className="restock-icon">
-
                                 <i className="bi bi-box-seam"></i>
-
                             </div>
-
 
                             <div>
 
@@ -716,15 +669,11 @@ function Inventory() {
                                 </strong>
 
                                 <span>
-
                                     Current stock:{" "}
-
                                     {Number(
                                         selectedIngredient.quantity
                                     ).toLocaleString()}{" "}
-
                                     {selectedIngredient.unit}
-
                                 </span>
 
                             </div>
@@ -735,9 +684,7 @@ function Inventory() {
                         {/* INPUT */}
 
                         <label className="restock-label">
-
                             Quantity to add
-
                         </label>
 
 
@@ -746,6 +693,7 @@ function Inventory() {
                             <input
                                 type="number"
                                 min="1"
+                                step="0.01"
                                 value={restockAmount}
                                 onChange={(e) =>
                                     setRestockAmount(
@@ -754,6 +702,7 @@ function Inventory() {
                                 }
                                 placeholder="Enter quantity"
                                 autoFocus
+                                disabled={restocking}
                             />
 
                             <span>
@@ -800,9 +749,7 @@ function Inventory() {
                                 onClick={closeRestock}
                                 disabled={restocking}
                             >
-
                                 Cancel
-
                             </button>
 
 
@@ -815,21 +762,15 @@ function Inventory() {
                                 {restocking ? (
 
                                     <>
-
                                         <span className="restock-spinner"></span>
-
                                         Restocking...
-
                                     </>
 
                                 ) : (
 
                                     <>
-
                                         <i className="bi bi-plus-lg"></i>
-
                                         Restock
-
                                     </>
 
                                 )}
@@ -837,7 +778,6 @@ function Inventory() {
                             </button>
 
                         </div>
-
 
                     </div>
 
@@ -864,7 +804,6 @@ function Inventory() {
                         }
                     >
 
-
                         {/* HISTORY HEADER */}
 
                         <div className="history-header">
@@ -886,9 +825,7 @@ function Inventory() {
                                 className="close-history"
                                 onClick={handleCloseHistory}
                             >
-
                                 <i className="bi bi-x-lg"></i>
-
                             </button>
 
                         </div>
@@ -908,7 +845,7 @@ function Inventory() {
 
                             </div>
 
-                        ) : transactions.length === 0 ? (
+                        ) : safeTransactions.length === 0 ? (
 
                             <div className="history-empty">
 
@@ -965,7 +902,7 @@ function Inventory() {
 
                                     <tbody>
 
-                                        {transactions.map(
+                                        {safeTransactions.map(
                                             (transaction) => (
 
                                                 <tr
@@ -977,11 +914,11 @@ function Inventory() {
                                                     {/* DATE */}
 
                                                     <td>
-
-                                                        {new Date(
-                                                            transaction.created_at
-                                                        ).toLocaleString()}
-
+                                                        {transaction.created_at
+                                                            ? new Date(
+                                                                transaction.created_at
+                                                            ).toLocaleString()
+                                                            : "—"}
                                                     </td>
 
 
@@ -1003,13 +940,15 @@ function Inventory() {
                                                     <td>
 
                                                         <span
-                                                            className={`transaction-type ${transaction.type.toLowerCase()}`}
+                                                            className={`transaction-type ${
+                                                                String(
+                                                                    transaction.type || ""
+                                                                ).toLowerCase()
+                                                            }`}
                                                         >
-
                                                             {
                                                                 transaction.type
                                                             }
-
                                                         </span>
 
                                                     </td>
@@ -1029,19 +968,15 @@ function Inventory() {
                                                             }
                                                         >
 
-                                                            {
-                                                                Number(
-                                                                    transaction.quantity
-                                                                ) >= 0
-                                                                    ? "+"
-                                                                    : ""
-                                                            }
+                                                            {Number(
+                                                                transaction.quantity
+                                                            ) >= 0
+                                                                ? "+"
+                                                                : ""}
 
                                                             {
                                                                 transaction.quantity
-                                                            }
-
-                                                            {" "}
+                                                            }{" "}
 
                                                             {
                                                                 transaction.unit
@@ -1096,9 +1031,7 @@ function Inventory() {
             )}
 
         </div>
-
     );
-
 }
 
 export default Inventory;
