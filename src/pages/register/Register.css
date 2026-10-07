@@ -1,103 +1,381 @@
-.register-page {
-    min-height: 80vh;
+/* ==========================================
+   READY ORDER MODAL
+========================================== */
+
+.ready-overlay {
+    position: fixed;
+    inset: 0;
+
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 60px 20px;
-    background: #21140D;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(10, 5, 2, 0.82);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    z-index: 99999;
+
+    animation: readyOverlayIn 0.25s ease;
 }
 
-.register-card {
-    width: 100%;
-    max-width: 450px;
-    padding: 40px;
-    background: #302015;
-    border: 1px solid #4A3525;
-    border-radius: 18px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
-}
 
-.register-header {
+/* ==========================================
+   MODAL
+========================================== */
+
+.ready-modal {
+    position: relative;
+
+    width: 470px;
+    max-width: 100%;
+
+    padding: 48px 42px 38px;
+
     text-align: center;
-    margin-bottom: 30px;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(230, 129, 32, 0.12),
+            transparent 42%
+        ),
+        linear-gradient(
+            145deg,
+            #352116,
+            #21140d 75%
+        );
+
+    border: 1px solid rgba(230, 129, 32, 0.55);
+
+    border-radius: 26px;
+
+    box-shadow:
+        0 35px 90px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(255, 255, 255, 0.02),
+        0 0 55px rgba(230, 129, 32, 0.10);
+
+    animation: readyModalIn 0.35s cubic-bezier(.22, .8, .25, 1);
 }
 
-.register-header h1 {
-    color: #E8D8C5;
-    font-size: 32px;
-    margin-bottom: 8px;
-}
 
-.register-header p {
-    color: #A99582;
-    margin: 0;
-}
+/* ==========================================
+   TOP DECORATION
+========================================== */
 
-.register-input {
-    margin-bottom: 20px;
-}
+.ready-modal::before {
+    content: "";
 
-.register-input label {
-    display: block;
-    color: #E8D8C5;
-    margin-bottom: 8px;
-}
+    position: absolute;
 
-.register-input input {
-    width: 100%;
-    padding: 13px 15px;
-    border: 1px solid #4A3525;
-    border-radius: 8px;
-    background: #21140D;
-    color: #E8D8C5;
-    outline: none;
-}
+    top: 0;
+    left: 50%;
 
-.register-input input:focus {
-    border-color: #e68120;
-}
+    width: 90px;
+    height: 3px;
 
-.register-input input::placeholder {
-    color: #806f60;
-}
+    transform: translateX(-50%);
 
-.register-btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
     background: #e68120;
-    color: #211006;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
+
+    border-radius: 0 0 10px 10px;
+
+    box-shadow:
+        0 0 15px rgba(230, 129, 32, 0.45);
 }
 
-.register-btn:hover {
-    background: #f09536;
-}
 
-.register-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+/* ==========================================
+   CLOSE BUTTON
+========================================== */
 
-.register-message {
-    text-align: center;
-    margin-top: 20px;
-    color: #e68120;
-}
+.ready-close {
+    position: absolute;
 
-.login-link {
-    text-align: center;
-    margin-top: 25px;
+    top: 18px;
+    right: 18px;
+
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid rgba(232, 216, 197, 0.16);
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.035);
+
     color: #A99582;
+
+    font-family: Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 300;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
 }
 
-.login-link button {
-    margin-left: 6px;
-    border: none;
-    background: none;
+.ready-close:hover {
+    background: rgba(230, 129, 32, 0.14);
+
+    border-color: rgba(230, 129, 32, 0.55);
+
     color: #e68120;
+
+    transform: rotate(90deg);
+}
+
+
+/* ==========================================
+   COFFEE ICON
+========================================== */
+
+.ready-coffee-icon {
+    position: relative;
+
+    width: 92px;
+    height: 92px;
+
+    margin: 5px auto 27px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(230, 129, 32, 0.18),
+            rgba(230, 129, 32, 0.04)
+        );
+
+    border: 1px solid rgba(230, 129, 32, 0.5);
+
+    color: #e68120;
+
+    font-size: 38px;
+
+    box-shadow:
+        0 0 0 9px rgba(230, 129, 32, 0.035),
+        0 0 35px rgba(230, 129, 32, 0.16);
+
+    animation: coffeePulse 2.4s ease-in-out infinite;
+}
+
+
+/* Small decorative ring */
+
+.ready-coffee-icon::after {
+    content: "";
+
+    position: absolute;
+
+    inset: -8px;
+
+    border: 1px solid rgba(230, 129, 32, 0.12);
+
+    border-radius: 50%;
+}
+
+
+/* ==========================================
+   HEADING
+========================================== */
+
+.ready-modal h2 {
+    margin: 0;
+
+    color: #E8D8C5;
+
+    font-size: 30px;
+    font-weight: 600;
+
+    line-height: 1.3;
+
+    letter-spacing: -0.5px;
+}
+
+.ready-modal h2 span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #e68120;
+
+    font-size: 32px;
+    font-weight: 700;
+}
+
+
+/* ==========================================
+   DESCRIPTION
+========================================== */
+
+.ready-modal p {
+    margin: 20px auto 30px;
+
+    max-width: 330px;
+
+    color: #A99582;
+
+    font-size: 15px;
+
+    line-height: 1.6;
+}
+
+
+/* ==========================================
+   OK BUTTON
+========================================== */
+
+.ready-ok-btn {
+    width: 100%;
+
+    padding: 14px 24px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background: #e68120;
+
+    color: #211006;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    letter-spacing: 0.2px;
+
     cursor: pointer;
+
+    box-shadow:
+        0 8px 25px rgba(230, 129, 32, 0.18);
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.ready-ok-btn:hover {
+    background: #f09532;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px rgba(230, 129, 32, 0.30);
+}
+
+.ready-ok-btn:active {
+    transform: translateY(0);
+}
+
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+
+@keyframes readyOverlayIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+@keyframes readyModalIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+@keyframes coffeePulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 9px rgba(230, 129, 32, 0.035),
+            0 0 30px rgba(230, 129, 32, 0.12);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 13px rgba(230, 129, 32, 0.025),
+            0 0 42px rgba(230, 129, 32, 0.22);
+    }
+
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 600px) {
+
+    .ready-overlay {
+        padding: 18px;
+    }
+
+    .ready-modal {
+        width: 100%;
+
+        padding: 44px 25px 28px;
+
+        border-radius: 22px;
+    }
+
+    .ready-coffee-icon {
+        width: 78px;
+        height: 78px;
+
+        font-size: 32px;
+
+        margin-bottom: 22px;
+    }
+
+    .ready-modal h2 {
+        font-size: 24px;
+    }
+
+    .ready-modal h2 span {
+        font-size: 26px;
+    }
+
+    .ready-modal p {
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+
 }

@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import "./Orders.css";
-
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -8,20 +7,132 @@ import { useNavigate } from "react-router-dom";
 import cappuccino from "../../assets/capuchino.png";
 import float from "../../assets/float.png";
 import espresso from "../../assets/espresso.png";
+import ReadyModal from "../../components/ReadyModal/ReadyModal";
 
+
+// ==========================================
+// COUNTDOWN
+// ==========================================
+
+function OrderCountdown({ readyAt, estimatedMinutes }) {
+    const [remaining, setRemaining] = useState(0);
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        const calculateRemaining = () => {
+            const readyTime = new Date(readyAt).getTime();
+
+            const difference = Math.max(
+                0,
+                readyTime - Date.now()
+            );
+
+            const seconds = Math.floor(difference / 1000);
+
+            setRemaining(seconds);
+
+            if (seconds <= 0) {
+                setReady(true);
+            }
+        };
+
+        calculateRemaining();
+
+        const timer = setInterval(
+            calculateRemaining,
+            1000
+        );
+
+        return () => {
+            clearInterval(timer);
+        };
+    }, [readyAt]);
+
+    // ======================================
+    // READY
+    // ======================================
+
+    if (ready) {
+        return (
+            <div className="order-ready-box">
+                <div className="order-ready-icon">
+                    <i className="bi bi-check-circle-fill"></i>
+                </div>
+
+                <div>
+                    <strong>
+                        Your order is ready!
+                    </strong>
+
+                    <span>
+                        Please collect your order from the counter.
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
+    // ======================================
+    // TIME
+    // ======================================
+
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+
+    return (
+        <div className="order-preparation-box">
+            <div className="preparation-icon">
+                <i className="bi bi-clock-history"></i>
+            </div>
+
+            <div className="preparation-content">
+                <span className="preparation-label">
+                    Estimated preparation time
+                </span>
+
+                <strong>
+                    Your order will be ready in{" "}
+                    <b>
+                        {minutes}:
+                        {String(seconds).padStart(2, "0")}
+                    </b>
+                </strong>
+
+                {estimatedMinutes && (
+                    <small>
+                        Estimated wait:{" "}
+                        {estimatedMinutes} minutes
+                    </small>
+                )}
+            </div>
+        </div>
+    );
+}
+
+
+// ==========================================
+// ORDERS
+// ==========================================
 
 function Orders() {
-
     const { reorderItems } = useCart();
-    const { token } = useAuth();
+    const { token, isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Prevent the same popup from appearing repeatedly
+    const alertedOrders = useRef(new Set());
 
-    /* PRODUCT IMAGES */
+    // Currently ready order shown in modal
+    const [readyOrder, setReadyOrder] = useState(null);
+
+
+    // ==========================================
+    // PRODUCT IMAGES
+    // ==========================================
 
     const productImages = {
         1: cappuccino,
@@ -32,121 +143,245 @@ function Orders() {
     };
 
 
-    /* GET ORDERS FROM MYSQL */
+    // ==========================================
+    // FETCH ORDERS
+    // ==========================================
 
-    useEffect(() => {
-
-        const fetchOrders = async () => {
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            setError("");
 
             if (!token) {
                 navigate("/login");
                 return;
             }
 
-            try {
-
-                setLoading(true);
-                setError("");
-
-                const response = await fetch(
-                    "http://localhost:3000/api/orders",
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
+            const response = await fetch(
+                "http://localhost:3000/api/orders",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
                     }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to fetch orders"
                 );
+            }
 
-                const data = await response.json();
+            setOrders(data.orders || []);
 
-                if (response.status === 401) {
-                    navigate("/login");
+        } catch (error) {
+            console.error(
+                "Orders error:",
+                error
+            );
+
+            setError(
+                error.message ||
+                "Failed to fetch orders"
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    // ==========================================
+    // INITIAL FETCH
+    // ==========================================
+
+    useEffect(() => {
+        if (!isLoggedIn || !token) {
+            navigate("/login");
+            return;
+        }
+
+        fetchOrders();
+    }, [
+        token,
+        isLoggedIn,
+        navigate
+    ]);
+
+
+    // ==========================================
+    // READY ALERT
+    // ==========================================
+
+    useEffect(() => {
+        if (!orders.length) {
+            return;
+        }
+
+        const checkOrders = () => {
+            const now = Date.now();
+
+            orders.forEach((order) => {
+
+                if (
+                    !order.ready_at ||
+                    order.status !== "Preparing"
+                ) {
                     return;
                 }
 
-                if (!response.ok) {
-                    throw new Error(
-                        data.message || "Failed to fetch orders"
+                const readyTime =
+                    new Date(
+                        order.ready_at
+                    ).getTime();
+
+                if (
+                    now >= readyTime &&
+                    !alertedOrders.current.has(
+                        order.id
+                    )
+                ) {
+
+                    // Prevent this order from
+                    // showing the popup again
+                    alertedOrders.current.add(
+                        order.id
+                    );
+
+                    // ==================================
+                    // CUSTOM READY MODAL
+                    // ==================================
+
+                    setReadyOrder(order.id);
+
+
+                    // ==================================
+                    // UPDATE STATUS IMMEDIATELY
+                    // ==================================
+
+                    setOrders(
+                        (currentOrders) =>
+                            currentOrders.map(
+                                (currentOrder) =>
+                                    currentOrder.id ===
+                                    order.id
+                                        ? {
+                                            ...currentOrder,
+                                            status:
+                                                "Completed"
+                                        }
+                                        : currentOrder
+                            )
                     );
                 }
-
-                setOrders(data.orders || []);
-
-            } catch (error) {
-
-                console.error("Orders error:", error);
-
-                setError(
-                    error.message ||
-                    "Unable to load your orders."
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
+            });
         };
 
-        fetchOrders();
+        checkOrders();
 
-    }, [token, navigate]);
+        const timer = setInterval(
+            checkOrders,
+            1000
+        );
+
+        return () => {
+            clearInterval(timer);
+        };
+
+    }, [orders]);
 
 
-    /* FORMAT DATE */
+    // ==========================================
+    // DATE
+    // ==========================================
 
     const formatDate = (date) => {
-
         if (!date) {
             return "Unknown date";
         }
 
-        return new Date(date).toLocaleDateString(
-            "en-IN",
-            {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-            }
-        );
+        return new Date(date)
+            .toLocaleDateString(
+                "en-IN",
+                {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                }
+            );
     };
 
 
-    /* ORDER AGAIN */
+    // ==========================================
+    // ORDER AGAIN
+    // ==========================================
 
     const handleOrderAgain = (order) => {
+        if (
+            !order.items ||
+            order.items.length === 0
+        ) {
+            return;
+        }
 
-        const items = order.items.map((item) => ({
+        const items = order.items.map(
+            (item) => ({
+                product_id:
+                    item.product_id,
 
-            product_id: item.product_id,
+                name:
+                    item.name ||
+                    "Coffee",
 
-            name: item.name || "Coffee",
+                category:
+                    item.category ||
+                    "Coffee",
 
-            category: item.category || "Coffee",
+                image:
+                    productImages[
+                        item.product_id
+                    ] ||
+                    cappuccino,
 
-            image:
-                productImages[item.product_id] ||
-                cappuccino,
+                price:
+                    Number(item.price),
 
-            price: Number(item.price),
+                quantity:
+                    Number(item.quantity),
 
-            quantity: Number(item.quantity),
+                size:
+                    item.size,
 
-            size: item.size,
+                temperature:
+                    item.temperature,
 
-            temperature: item.temperature,
+                sugar:
+                    item.sugar,
 
-            sugar: item.sugar,
+                milk:
+                    item.milk,
 
-            milk: item.milk,
+                extras: {
+                    extraShot:
+                        Boolean(
+                            item.extra_shot
+                        ),
 
-            extras: {
-                extraShot: Boolean(item.extra_shot),
-                oatMilk: Boolean(item.oat_milk),
-                caramel: Boolean(item.caramel)
-            }
+                    oatMilk:
+                        Boolean(
+                            item.oat_milk
+                        ),
 
-        }));
+                    caramel:
+                        Boolean(
+                            item.caramel
+                        )
+                }
+            })
+        );
 
         reorderItems(items);
 
@@ -154,29 +389,34 @@ function Orders() {
     };
 
 
-    /* LOADING */
+    // ==========================================
+    // LOADING
+    // ==========================================
 
     if (loading) {
-
         return (
             <div className="orders-page">
 
                 <section className="orders-hero">
-
-                    <span>MY ACCOUNT</span>
+                    <span>
+                        MY ACCOUNT
+                    </span>
 
                     <h1>
-                        Order <strong>History</strong>
+                        Order
+                        <strong>
+                            History
+                        </strong>
                     </h1>
 
                     <p>
-                        Keep track of all your previous coffee orders.
+                        Keep track of all your
+                        previous coffee orders.
                     </p>
-
                 </section>
 
-                <section className="orders-container">
 
+                <section className="orders-container">
                     <div className="orders-empty">
 
                         <div className="empty-order-icon">
@@ -184,15 +424,17 @@ function Orders() {
                         </div>
 
                         <h2>
-                            Loading <strong>Orders</strong>
+                            Loading
+                            <strong>
+                                Orders
+                            </strong>
                         </h2>
 
                         <p>
-                            Please wait while we load your order history.
+                            Fetching your orders...
                         </p>
 
                     </div>
-
                 </section>
 
             </div>
@@ -200,29 +442,34 @@ function Orders() {
     }
 
 
-    /* ERROR */
+    // ==========================================
+    // ERROR
+    // ==========================================
 
     if (error) {
-
         return (
             <div className="orders-page">
 
                 <section className="orders-hero">
-
-                    <span>MY ACCOUNT</span>
+                    <span>
+                        MY ACCOUNT
+                    </span>
 
                     <h1>
-                        Order <strong>History</strong>
+                        Order
+                        <strong>
+                            History
+                        </strong>
                     </h1>
 
                     <p>
-                        Keep track of all your previous coffee orders.
+                        Keep track of all your
+                        previous coffee orders.
                     </p>
-
                 </section>
 
-                <section className="orders-container">
 
+                <section className="orders-container">
                     <div className="orders-empty">
 
                         <div className="empty-order-icon">
@@ -230,7 +477,10 @@ function Orders() {
                         </div>
 
                         <h2>
-                            Couldn't Load <strong>Orders</strong>
+                            Couldn't Load
+                            <strong>
+                                Orders
+                            </strong>
                         </h2>
 
                         <p>
@@ -238,14 +488,13 @@ function Orders() {
                         </p>
 
                         <button
-                            onClick={() => window.location.reload()}
+                            onClick={fetchOrders}
                         >
                             Try Again
                             <i className="bi bi-arrow-repeat"></i>
                         </button>
 
                     </div>
-
                 </section>
 
             </div>
@@ -253,54 +502,83 @@ function Orders() {
     }
 
 
-    return (
+    // ==========================================
+    // MAIN
+    // ==========================================
 
+    return (
         <div className="orders-page">
 
+            {/* =================================
+                READY ORDER MODAL
+            ================================= */}
 
-            {/* HERO */}
+            {readyOrder && (
+                <ReadyModal
+                    orderId={readyOrder}
+                    onClose={() =>
+                        setReadyOrder(null)
+                    }
+                />
+            )}
+
+
+            {/* =================================
+                HERO
+            ================================= */}
 
             <section className="orders-hero">
 
-                <span>MY ACCOUNT</span>
+                <span>
+                    MY ACCOUNT
+                </span>
 
                 <h1>
-                    Order <strong>History</strong>
+                    Order
+                    <strong>
+                        History
+                    </strong>
                 </h1>
 
                 <p>
-                    Keep track of all your previous coffee orders.
+                    Keep track of all your
+                    previous coffee orders.
                 </p>
 
             </section>
 
 
-            {/* ORDERS */}
+            {/* =================================
+                ORDERS
+            ================================= */}
 
             <section className="orders-container">
-
 
                 {/* HEADER */}
 
                 <div className="orders-header">
 
                     <div>
-
                         <span>
                             YOUR ORDERS
                         </span>
 
                         <h2>
-                            Previous <strong>Orders</strong>
+                            Previous
+                            <strong>
+                                Orders
+                            </strong>
                         </h2>
-
                     </div>
 
 
                     <button
-                        onClick={() => navigate("/menu")}
+                        onClick={() =>
+                            navigate("/menu")
+                        }
                     >
                         Order Coffee
+
                         <i className="bi bi-arrow-right"></i>
                     </button>
 
@@ -314,24 +592,28 @@ function Orders() {
                     <div className="orders-empty">
 
                         <div className="empty-order-icon">
-
                             <i className="bi bi-receipt"></i>
-
                         </div>
 
                         <h2>
-                            No Orders <strong>Yet</strong>
+                            No Orders
+                            <strong>
+                                Yet
+                            </strong>
                         </h2>
 
                         <p>
-                            You haven't placed any orders yet.
-                            Your completed orders will appear here.
+                            You haven't placed
+                            any orders yet.
                         </p>
 
                         <button
-                            onClick={() => navigate("/menu")}
+                            onClick={() =>
+                                navigate("/menu")
+                            }
                         >
                             Explore Menu
+
                             <i className="bi bi-arrow-right"></i>
                         </button>
 
@@ -339,8 +621,9 @@ function Orders() {
 
                 ) : (
 
-
-                    /* ORDER LIST */
+                    /* =================================
+                       ORDER LIST
+                    ================================= */
 
                     <div className="orders-list">
 
@@ -351,12 +634,11 @@ function Orders() {
                                 key={order.id}
                             >
 
-
                                 {/* ORDER HEADER */}
 
                                 <div className="order-card-header">
 
-                                    <div>
+                                    <div className="order-number">
 
                                         <span>
                                             ORDER NUMBER
@@ -384,9 +666,51 @@ function Orders() {
                                     </div>
 
 
-                                    <div className="order-status-badge">
+                                    <div className="order-status-area">
 
-                                        {order.status || "Preparing"}
+                                        <div
+                                            className={
+                                                `order-status-badge ${
+                                                    order.status ===
+                                                    "Preparing"
+                                                        ? "preparing"
+                                                        : "completed"
+                                                }`
+                                            }
+                                        >
+
+                                            <i
+                                                className={
+                                                    order.status ===
+                                                    "Preparing"
+                                                        ? "bi bi-hourglass-split"
+                                                        : "bi bi-check-circle"
+                                                }
+                                            ></i>
+
+                                            {order.status ||
+                                                "Preparing"}
+
+                                        </div>
+
+
+                                        {/* COUNTDOWN */}
+
+                                        {order.status ===
+                                            "Preparing" &&
+                                            order.ready_at && (
+
+                                                <OrderCountdown
+                                                    readyAt={
+                                                        order.ready_at
+                                                    }
+
+                                                    estimatedMinutes={
+                                                        order.estimated_minutes
+                                                    }
+                                                />
+
+                                            )}
 
                                     </div>
 
@@ -397,173 +721,100 @@ function Orders() {
 
                                 <div className="order-items">
 
-                                    {order.items &&
-                                        order.items.map(
-                                            (item, index) => (
+                                    {order.items?.map(
+                                        (item, index) => (
 
-                                                <div
-                                                    className="order-item"
-                                                    key={item.id || index}
-                                                >
+                                            <div
+                                                className="order-item"
+                                                key={
+                                                    item.id ||
+                                                    index
+                                                }
+                                            >
 
+                                                <div className="order-item-image">
 
-                                                    {/* IMAGE */}
+                                                    <img
+                                                        src={
+                                                            productImages[
+                                                                item.product_id
+                                                            ] ||
+                                                            cappuccino
+                                                        }
 
-                                                    <div className="order-item-image">
+                                                        alt={
+                                                            item.name ||
+                                                            "Coffee"
+                                                        }
+                                                    />
 
-                                                        <img
-                                                            src={
-                                                                productImages[
-                                                                    item.product_id
-                                                                ] ||
-                                                                cappuccino
-                                                            }
-                                                            alt={
-                                                                item.name ||
-                                                                "Coffee"
-                                                            }
-                                                        />
+                                                    <span>
+                                                        {item.quantity}
+                                                    </span>
 
-                                                        <span className="order-item-quantity">
-                                                            {item.quantity}
-                                                        </span>
-
-                                                    </div>
-
-
-                                                    {/* DETAILS */}
-
-                                                    <div className="order-item-details">
-
-                                                        <h3>
-                                                            {item.name ||
-                                                                "Coffee"}
-                                                        </h3>
+                                                </div>
 
 
-                                                        <span className="order-item-category">
-                                                            {item.category ||
-                                                                "Coffee"}
-                                                        </span>
+                                                <div className="order-item-details">
+
+                                                    <h3>
+                                                        {item.name ||
+                                                            "Coffee"}
+                                                    </h3>
+
+                                                    <span className="order-item-category">
+                                                        {item.category ||
+                                                            "Coffee"}
+                                                    </span>
 
 
-                                                        {/* CUSTOMIZATION */}
+                                                    <div className="order-item-customization">
 
-                                                        <div className="order-item-customization">
+                                                        {item.size && (
+                                                            <span>
+                                                                {item.size}
+                                                            </span>
+                                                        )}
 
+                                                        {item.temperature && (
+                                                            <span>
+                                                                {item.temperature}
+                                                            </span>
+                                                        )}
 
-                                                            {item.size && (
+                                                        {item.milk && (
+                                                            <span>
+                                                                {item.milk} Milk
+                                                            </span>
+                                                        )}
 
-                                                                <span>
-
-                                                                    <i className="bi bi-cup"></i>
-
-                                                                    {item.size}
-
-                                                                </span>
-
-                                                            )}
-
-
-                                                            {item.temperature && (
-
-                                                                <span>
-
-                                                                    <i
-                                                                        className={
-                                                                            item.temperature ===
-                                                                                "Hot"
-                                                                                ? "bi bi-cup-hot"
-                                                                                : "bi bi-snow"
-                                                                        }
-                                                                    ></i>
-
-                                                                    {item.temperature}
-
-                                                                </span>
-
-                                                            )}
-
-
-                                                            {item.sugar && (
-
-                                                                <span>
-
-                                                                    {item.sugar}
-                                                                    {" "}
-                                                                    Sugar
-
-                                                                </span>
-
-                                                            )}
-
-
-                                                            {item.milk && (
-
-                                                                <span>
-
-                                                                    {item.milk}
-                                                                    {" "}
-                                                                    Milk
-
-                                                                </span>
-
-                                                            )}
-
-
-                                                            {Boolean(
-                                                                item.extra_shot
-                                                            ) && (
-
-                                                                    <span>
-                                                                        + Extra Shot
-                                                                    </span>
-
-                                                                )}
-
-
-                                                            {Boolean(
-                                                                item.oat_milk
-                                                            ) && (
-
-                                                                    <span>
-                                                                        + Oat Milk
-                                                                    </span>
-
-                                                                )}
-
-
-                                                            {Boolean(
-                                                                item.caramel
-                                                            ) && (
-
-                                                                    <span>
-                                                                        + Caramel
-                                                                    </span>
-
-                                                                )}
-
-                                                        </div>
-
-                                                    </div>
-
-
-                                                    {/* PRICE */}
-
-                                                    <div className="order-item-price">
-
-                                                        $
-                                                        {(
-                                                            Number(item.price) *
-                                                            Number(item.quantity)
-                                                        ).toFixed(2)}
+                                                        {item.sugar && (
+                                                            <span>
+                                                                {item.sugar} Sugar
+                                                            </span>
+                                                        )}
 
                                                     </div>
 
                                                 </div>
 
-                                            )
-                                        )}
+
+                                                <strong className="order-item-price">
+                                                    $
+                                                    {(
+                                                        Number(
+                                                            item.price
+                                                        ) *
+                                                        Number(
+                                                            item.quantity
+                                                        )
+                                                    ).toFixed(2)}
+                                                </strong>
+
+                                            </div>
+
+                                        )
+                                    )}
 
                                 </div>
 
@@ -572,8 +823,7 @@ function Orders() {
 
                                 <div className="order-card-footer">
 
-
-                                    <div className="order-total">
+                                    <div>
 
                                         <span>
                                             Total
@@ -590,15 +840,16 @@ function Orders() {
 
 
                                     <button
+                                        className="reorder-btn"
                                         onClick={() =>
-                                            handleOrderAgain(order)
+                                            handleOrderAgain(
+                                                order
+                                            )
                                         }
                                     >
-
                                         Order Again
 
                                         <i className="bi bi-arrow-right"></i>
-
                                     </button>
 
                                 </div>
@@ -611,21 +862,23 @@ function Orders() {
 
                 )}
 
-
-                {/* BACK TO PROFILE */}
-
-                <button
-                    className="back-profile-btn"
-                    onClick={() => navigate("/profile")}
-                >
-
-                    <i className="bi bi-arrow-left"></i>
-
-                    Back to Profile
-
-                </button>
-
             </section>
+
+
+            {/* =================================
+                BACK
+            ================================= */}
+
+            <button
+                className="orders-back"
+                onClick={() =>
+                    navigate("/profile")
+                }
+            >
+                <i className="bi bi-arrow-left"></i>
+
+                Back to Profile
+            </button>
 
         </div>
     );

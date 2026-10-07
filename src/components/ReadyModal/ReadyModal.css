@@ -1,0 +1,146 @@
+.ready-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(5px);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 9999;
+}
+
+.ready-modal {
+    position: relative;
+
+    width: 520px;
+    padding: 45px 45px 40px;
+
+    text-align: center;
+
+    background: linear-gradient(
+        145deg,
+        #2b1a12,
+        #1d110c
+    );
+
+    border: 1px solid #9b5b20;
+    border-radius: 20px;
+
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.7),
+        0 0 35px rgba(255, 140, 0, 0.12);
+
+    animation: modalIn 0.25s ease-out;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+    border: 1px solid #60432e;
+
+    background: transparent;
+    color: #fff;
+
+    font-size: 28px;
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.close-btn:hover {
+    background: #ff8c00;
+    border-color: #ff8c00;
+}
+
+.coffee-icon {
+    width: 100px;
+    height: 100px;
+
+    margin: 5px auto 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(255, 140, 0, 0.12);
+    border: 2px solid #ff8c00;
+
+    font-size: 48px;
+
+    box-shadow: 0 0 30px rgba(255, 140, 0, 0.18);
+}
+
+.ready-modal h2 {
+    margin: 0;
+
+    color: #f5eee7;
+
+    font-size: 32px;
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+.ready-modal h2 span {
+    display: block;
+    color: #ff8c00;
+}
+
+.ready-modal p {
+    margin: 25px 0 30px;
+
+    color: #cfc3ba;
+    font-size: 17px;
+}
+
+.ready-btn {
+    width: 70%;
+
+    padding: 16px;
+
+    border: none;
+    border-radius: 30px;
+
+    background: linear-gradient(
+        90deg,
+        #ff9418,
+        #ff7b00
+    );
+
+    color: white;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: 0 8px 25px rgba(255, 130, 0, 0.25);
+
+    transition: 0.2s;
+}
+
+.ready-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(255, 130, 0, 0.4);
+}

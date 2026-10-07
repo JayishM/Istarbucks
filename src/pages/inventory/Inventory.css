@@ -797,3 +797,277 @@
     }
 
 }
+/* ============================= */
+/* HISTORY BUTTON */
+/* ============================= */
+
+.history-btn {
+    border: 1px solid #4A3525;
+    background: #302015;
+    color: #E8D8C5;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.history-btn:hover {
+    background: #3b281b;
+    border-color: #e68120;
+    color: #e68120;
+}
+
+
+/* ============================= */
+/* HISTORY MODAL */
+/* ============================= */
+
+.history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    z-index: 2000;
+}
+
+.history-modal {
+    width: min(1200px, 95vw);
+    max-height: 85vh;
+
+    background: #21140D;
+    border: 1px solid #4A3525;
+    border-radius: 16px;
+
+    overflow: hidden;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.history-header {
+    padding: 22px 25px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    border-bottom: 1px solid #4A3525;
+}
+
+.history-header h2 {
+    margin: 0;
+    color: #E8D8C5;
+    font-size: 24px;
+}
+
+.history-header p {
+    margin: 5px 0 0;
+    color: #A99582;
+}
+
+.close-history {
+    width: 38px;
+    height: 38px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #302015;
+    color: #E8D8C5;
+
+    cursor: pointer;
+}
+
+.close-history:hover {
+    background: #e68120;
+    color: #211006;
+}
+
+
+/* ============================= */
+/* HISTORY TABLE */
+/* ============================= */
+
+.history-table-wrapper {
+    overflow: auto;
+    max-height: calc(85vh - 100px);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th {
+    position: sticky;
+    top: 0;
+
+    background: #302015;
+
+    color: #A99582;
+
+    text-align: left;
+
+    padding: 14px 18px;
+
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.history-table td {
+    padding: 15px 18px;
+
+    color: #E8D8C5;
+
+    border-top: 1px solid #3b281b;
+
+    white-space: nowrap;
+}
+
+.history-table tbody tr:hover {
+    background: #2a1b13;
+}
+
+
+/* ============================= */
+/* TRANSACTION TYPES */
+/* ============================= */
+
+.transaction-type {
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    border-radius: 20px;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.transaction-type.restock {
+    background: rgba(60, 180, 100, 0.15);
+    color: #6fd38c;
+}
+
+.transaction-type.order {
+    background: rgba(220, 70, 70, 0.15);
+    color: #ef7777;
+}
+
+.transaction-type.adjustment {
+    background: rgba(230, 129, 32, 0.15);
+    color: #e68120;
+}
+
+
+/* ============================= */
+/* QUANTITY */
+/* ============================= */
+
+.quantity-positive {
+    color: #6fd38c;
+    font-weight: 700;
+}
+
+.quantity-negative {
+    color: #ef7777;
+    font-weight: 700;
+}
+
+
+/* ============================= */
+/* EMPTY / LOADING */
+/* ============================= */
+
+.history-loading,
+.history-empty {
+    min-height: 300px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    color: #A99582;
+}
+
+.history-empty i {
+    font-size: 45px;
+    margin-bottom: 15px;
+}
+
+.history-empty h3 {
+    color: #E8D8C5;
+    margin-bottom: 5px;
+}
+
+.history-empty p {
+    margin: 0;
+}
+
+
+/* ============================= */
+/* SPINNER */
+/* ============================= */
+
+.history-spinner {
+    width: 35px;
+    height: 35px;
+
+    border: 3px solid #4A3525;
+    border-top-color: #e68120;
+
+    border-radius: 50%;
+
+    animation: historySpin 0.8s linear infinite;
+
+    margin-bottom: 15px;
+}
+
+@keyframes historySpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ============================= */
+/* MOBILE */
+/* ============================= */
+
+@media (max-width: 768px) {
+
+    .history-overlay {
+        padding: 10px;
+    }
+
+    .history-modal {
+        width: 100%;
+        max-height: 90vh;
+    }
+
+    .history-header {
+        padding: 18px;
+    }
+
+    .history-header h2 {
+        font-size: 20px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 12px;
+        font-size: 12px;
+    }
+}

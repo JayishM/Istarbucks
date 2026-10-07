@@ -1,199 +1,233 @@
 import "./OrderSuccess.css";
-import { useLocation, useNavigate } from "react-router-dom";
+
+import {
+    useEffect,
+    useState
+} from "react";
+
+import {
+    useLocation,
+    useNavigate
+} from "react-router-dom";
+
 
 function OrderSuccess() {
-    const navigate = useNavigate();
+
     const location = useLocation();
+    const navigate = useNavigate();
 
     const order = location.state?.order;
 
-    // If no order information was passed
-    if (!order) {
-        return (
-            <div className="success-page">
-                <div className="success-card">
 
-                    <div className="success-icon">
-                        <i className="bi bi-receipt"></i>
-                    </div>
+    const [remaining, setRemaining] =
+        useState(0);
+
+
+    useEffect(() => {
+
+        if (!order?.ready_at) {
+            return;
+        }
+
+
+        const calculateRemaining = () => {
+
+            const readyTime =
+                new Date(order.ready_at).getTime();
+
+            const now =
+                Date.now();
+
+            const difference =
+                Math.max(
+                    0,
+                    readyTime - now
+                );
+
+            setRemaining(
+                Math.floor(difference / 1000)
+            );
+        };
+
+
+        calculateRemaining();
+
+
+        const timer =
+            setInterval(
+                calculateRemaining,
+                1000
+            );
+
+
+        return () => {
+            clearInterval(timer);
+        };
+
+    }, [order]);
+
+
+    if (!order) {
+
+        return (
+            <div className="order-success-page">
+
+                <div className="order-success-card">
+
+                    <i className="bi bi-receipt"></i>
 
                     <h1>
-                        No Order <strong>Found</strong>
+                        Order Not Found
                     </h1>
 
-                    <p className="success-message">
+                    <p>
                         We couldn't find your order details.
                     </p>
 
                     <button
-                        className="primary-success-btn"
                         onClick={() => navigate("/menu")}
                     >
-                        Go to Menu
-                        <i className="bi bi-arrow-right"></i>
+                        Back to Menu
                     </button>
 
                 </div>
+
             </div>
         );
     }
 
-    const {
-        id,
-        items = [],
-        subtotal = 0,
-        delivery = 0,
-        tax = 0,
-        total = 0
-    } = order;
 
-    // Total number of items
-    const itemCount = items.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-    );
+    const minutes =
+        Math.floor(remaining / 60);
+
+    const seconds =
+        remaining % 60;
+
+
+    const formattedTime =
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+
+    const completed =
+        remaining <= 0;
+
 
     return (
-        <div className="success-page">
 
-            <div className="success-card">
+        <div className="order-success-page">
 
-                {/* SUCCESS ICON */}
+            <div className="order-success-card">
 
                 <div className="success-icon">
-                    <i className="bi bi-check-lg"></i>
+
+                    <i
+                        className={
+                            completed
+                                ? "bi bi-check-circle-fill"
+                                : "bi bi-cup-hot-fill"
+                        }
+                    ></i>
+
                 </div>
 
+
                 <span className="success-label">
-                    ORDER CONFIRMED
+                    ORDER #{order.id}
                 </span>
 
+
                 <h1>
-                    Thank You for <strong>Your Order!</strong>
+
+                    {completed
+                        ? "Your Order Is Ready!"
+                        : "Order Confirmed!"
+                    }
+
                 </h1>
 
-                <p className="success-message">
-                    Your coffee is being prepared with care.
-                    We can't wait to serve you!
+
+                <p>
+
+                    {completed
+                        ? "Your coffee has been prepared. Enjoy!"
+                        : "We're preparing your coffee right now."
+                    }
+
                 </p>
 
 
-                {/* ORDER NUMBER */}
+                {!completed && (
 
-                <div className="order-number">
-                    <span>ORDER NUMBER</span>
+                    <div className="order-timer">
 
-                    <strong>
-                        #{id}
-                    </strong>
-                </div>
+                        <span>
+                            ESTIMATED WAIT
+                        </span>
 
+                        <strong>
+                            {formattedTime}
+                        </strong>
 
-                {/* ITEMS */}
-
-                {items.length > 0 && (
-                    <div className="success-items">
-
-                        <div className="success-items-heading">
-                            <span>YOUR ITEMS</span>
-
-                            <span>
-                                {itemCount}{" "}
-                                {itemCount === 1 ? "item" : "items"}
-                            </span>
-                        </div>
-
-
-                        {items.map((item) => (
-
-                            <div
-                                className="success-item"
-                                key={item.name}
-                            >
-
-                                <div className="success-item-image">
-
-                                    <img
-                                        src={item.image}
-                                        alt={item.name}
-                                    />
-
-                                    <span>
-                                        {item.quantity}
-                                    </span>
-
-                                </div>
-
-
-                                <div className="success-item-info">
-
-                                    <h3>
-                                        {item.name}
-                                    </h3>
-
-                                    <p>
-                                        {item.category}
-                                    </p>
-
-                                </div>
-
-
-                                <strong>
-                                    $
-                                    {(
-                                        Number(item.price) *
-                                        item.quantity
-                                    ).toFixed(2)}
-                                </strong>
-
-                            </div>
-
-                        ))}
+                        <small>
+                            Your order will be ready soon
+                        </small>
 
                     </div>
+
                 )}
 
 
-                {/* TOTAL */}
+                {completed && (
 
-                <div className="success-total">
+                    <div className="order-ready">
+
+                        <i className="bi bi-check2"></i>
+
+                        <span>
+                            Order completed
+                        </span>
+
+                    </div>
+
+                )}
+
+
+                <div className="order-success-details">
 
                     <div>
-                        <span>Subtotal</span>
+
+                        <span>
+                            ORDER NUMBER
+                        </span>
 
                         <strong>
-                            ${Number(subtotal).toFixed(2)}
+                            #{order.id}
                         </strong>
+
                     </div>
 
 
                     <div>
-                        <span>Delivery</span>
+
+                        <span>
+                            TOTAL
+                        </span>
 
                         <strong>
-                            ${Number(delivery).toFixed(2)}
+                            ${Number(order.total).toFixed(2)}
                         </strong>
+
                     </div>
 
 
                     <div>
-                        <span>Tax</span>
+
+                        <span>
+                            ESTIMATED TIME
+                        </span>
 
                         <strong>
-                            ${Number(tax).toFixed(2)}
-                        </strong>
-                    </div>
-
-
-                    <div className="total-line"></div>
-
-
-                    <div className="final-total">
-
-                        <span>Total</span>
-
-                        <strong>
-                            ${Number(total).toFixed(2)}
+                            {order.estimated_minutes} min
                         </strong>
 
                     </div>
@@ -201,48 +235,27 @@ function OrderSuccess() {
                 </div>
 
 
-                {/* DELIVERY STATUS */}
-
-                <div className="order-status">
-
-                    <div className="status-icon">
-                        <i className="bi bi-cup-hot"></i>
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Your order is being prepared
-                        </strong>
-
-                        <p>
-                            Estimated delivery: 25–35 minutes
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                {/* BUTTONS */}
-
-                <div className="success-actions">
+                <div className="order-success-buttons">
 
                     <button
-                        className="primary-success-btn"
-                        onClick={() => navigate("/menu")}
+                        onClick={() =>
+                            navigate("/orders")
+                        }
                     >
-                        Continue Shopping
+                        View My Orders
 
                         <i className="bi bi-arrow-right"></i>
+
                     </button>
 
 
                     <button
-                        className="secondary-success-btn"
-                        onClick={() => navigate("/")}
+                        className="secondary"
+                        onClick={() =>
+                            navigate("/menu")
+                        }
                     >
-                        Back to Home
+                        Order More Coffee
                     </button>
 
                 </div>
@@ -250,7 +263,9 @@ function OrderSuccess() {
             </div>
 
         </div>
+
     );
 }
+
 
 export default OrderSuccess;

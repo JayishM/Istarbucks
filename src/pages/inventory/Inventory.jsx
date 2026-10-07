@@ -3,12 +3,21 @@ import "./Inventory.css";
 
 function Inventory() {
 
+    // ==========================================
+    // STATE
+    // ==========================================
+
     const [ingredients, setIngredients] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [selectedIngredient, setSelectedIngredient] = useState(null);
     const [restockAmount, setRestockAmount] = useState("");
     const [restocking, setRestocking] = useState(false);
+
+    // History
+    const [transactions, setTransactions] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
 
     // ==========================================
@@ -37,12 +46,85 @@ function Inventory() {
         } finally {
 
             setLoading(false);
+
         }
     };
 
 
+    // ==========================================
+    // FETCH TRANSACTION HISTORY
+    // ==========================================
+
+    const fetchTransactions = async () => {
+
+        try {
+
+            setHistoryLoading(true);
+
+            const response = await fetch(
+                "http://localhost:3000/api/inventory/transactions"
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to fetch transaction history"
+                );
+            }
+
+            setTransactions(data.transactions || []);
+
+        } catch (error) {
+
+            console.error(
+                "Failed to fetch transaction history:",
+                error
+            );
+
+            alert(error.message);
+
+        } finally {
+
+            setHistoryLoading(false);
+
+        }
+    };
+
+
+    // ==========================================
+    // OPEN HISTORY
+    // ==========================================
+
+    const handleShowHistory = () => {
+
+        setShowHistory(true);
+
+        fetchTransactions();
+
+    };
+
+
+    // ==========================================
+    // CLOSE HISTORY
+    // ==========================================
+
+    const handleCloseHistory = () => {
+
+        setShowHistory(false);
+
+    };
+
+
+    // ==========================================
+    // INITIAL LOAD
+    // ==========================================
+
     useEffect(() => {
+
         fetchInventory();
+
     }, []);
 
 
@@ -56,10 +138,13 @@ function Inventory() {
             Number(item.quantity) <=
             Number(item.low_stock_threshold)
         ) {
+
             return "Low Stock";
+
         }
 
         return "In Stock";
+
     };
 
 
@@ -71,6 +156,7 @@ function Inventory() {
 
         setSelectedIngredient(ingredient);
         setRestockAmount("");
+
     };
 
 
@@ -84,6 +170,7 @@ function Inventory() {
 
         setSelectedIngredient(null);
         setRestockAmount("");
+
     };
 
 
@@ -94,7 +181,6 @@ function Inventory() {
     const handleRestock = async () => {
 
         const amount = Number(restockAmount);
-
 
         if (!amount || amount <= 0) {
 
@@ -109,7 +195,6 @@ function Inventory() {
         try {
 
             setRestocking(true);
-
 
             const response = await fetch(
                 `http://localhost:3000/api/inventory/${selectedIngredient.id}/restock`,
@@ -137,6 +222,7 @@ function Inventory() {
                     data.message ||
                     "Failed to restock"
                 );
+
             }
 
 
@@ -147,6 +233,13 @@ function Inventory() {
             // Close modal
             setSelectedIngredient(null);
             setRestockAmount("");
+
+
+            // If history has already been opened,
+            // refresh it as well.
+            if (showHistory) {
+                await fetchTransactions();
+            }
 
 
         } catch (error) {
@@ -161,7 +254,9 @@ function Inventory() {
         } finally {
 
             setRestocking(false);
+
         }
+
     };
 
 
@@ -172,14 +267,19 @@ function Inventory() {
     if (loading) {
 
         return (
+
             <div className="inventory-page">
 
                 <div className="inventory-loading">
+
                     Loading inventory...
+
                 </div>
 
             </div>
+
         );
+
     }
 
 
@@ -188,10 +288,13 @@ function Inventory() {
     // ==========================================
 
     return (
+
         <div className="inventory-page">
 
 
-            {/* HEADER */}
+            {/* ==================================
+                HEADER
+            ================================== */}
 
             <section className="inventory-header">
 
@@ -212,6 +315,8 @@ function Inventory() {
 
                 </div>
 
+
+                {/* SUMMARY */}
 
                 <div className="inventory-summary">
 
@@ -265,15 +370,20 @@ function Inventory() {
 
                     </div>
 
+
                 </div>
 
             </section>
 
 
-            {/* INVENTORY CARD */}
+            {/* ==================================
+                INVENTORY CARD
+            ================================== */}
 
             <section className="inventory-card">
 
+
+                {/* CARD HEADER */}
 
                 <div className="inventory-card-header">
 
@@ -290,21 +400,51 @@ function Inventory() {
                     </div>
 
 
-                    <button
-                        className="refresh-btn"
-                        onClick={fetchInventory}
+                    {/* ACTION BUTTONS */}
+
+                    <div
+                        className="inventory-actions"
+                        style={{
+                            display: "flex",
+                            gap: "10px"
+                        }}
                     >
 
-                        <i className="bi bi-arrow-clockwise"></i>
+                        {/* HISTORY */}
 
-                        Refresh
+                        <button
+                            className="history-btn"
+                            onClick={handleShowHistory}
+                        >
 
-                    </button>
+                            <i className="bi bi-clock-history"></i>
+
+                            History
+
+                        </button>
+
+
+                        {/* REFRESH */}
+
+                        <button
+                            className="refresh-btn"
+                            onClick={fetchInventory}
+                        >
+
+                            <i className="bi bi-arrow-clockwise"></i>
+
+                            Refresh
+
+                        </button>
+
+                    </div>
 
                 </div>
 
 
-                {/* TABLE */}
+                {/* ==================================
+                    TABLE
+                ================================== */}
 
                 <div className="inventory-table-wrapper">
 
@@ -472,6 +612,7 @@ function Inventory() {
 
                                             </td>
 
+
                                         </tr>
 
                                     );
@@ -483,6 +624,8 @@ function Inventory() {
 
                     </table>
 
+
+                    {/* EMPTY */}
 
                     {ingredients.length === 0 && (
 
@@ -657,7 +800,9 @@ function Inventory() {
                                 onClick={closeRestock}
                                 disabled={restocking}
                             >
+
                                 Cancel
+
                             </button>
 
 
@@ -668,20 +813,281 @@ function Inventory() {
                             >
 
                                 {restocking ? (
+
                                     <>
+
                                         <span className="restock-spinner"></span>
+
                                         Restocking...
+
                                     </>
+
                                 ) : (
+
                                     <>
+
                                         <i className="bi bi-plus-lg"></i>
+
                                         Restock
+
                                     </>
+
                                 )}
 
                             </button>
 
                         </div>
+
+
+                    </div>
+
+                </div>
+
+            )}
+
+
+            {/* =====================================
+                INVENTORY HISTORY MODAL
+            ====================================== */}
+
+            {showHistory && (
+
+                <div
+                    className="history-overlay"
+                    onClick={handleCloseHistory}
+                >
+
+                    <div
+                        className="history-modal"
+                        onClick={(e) =>
+                            e.stopPropagation()
+                        }
+                    >
+
+
+                        {/* HISTORY HEADER */}
+
+                        <div className="history-header">
+
+                            <div>
+
+                                <h2>
+                                    Inventory History
+                                </h2>
+
+                                <p>
+                                    Track every stock movement
+                                </p>
+
+                            </div>
+
+
+                            <button
+                                className="close-history"
+                                onClick={handleCloseHistory}
+                            >
+
+                                <i className="bi bi-x-lg"></i>
+
+                            </button>
+
+                        </div>
+
+
+                        {/* HISTORY CONTENT */}
+
+                        {historyLoading ? (
+
+                            <div className="history-loading">
+
+                                <div className="history-spinner"></div>
+
+                                <p>
+                                    Loading history...
+                                </p>
+
+                            </div>
+
+                        ) : transactions.length === 0 ? (
+
+                            <div className="history-empty">
+
+                                <i className="bi bi-clock-history"></i>
+
+                                <h3>
+                                    No transactions yet
+                                </h3>
+
+                                <p>
+                                    Inventory movements will appear here.
+                                </p>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="history-table-wrapper">
+
+                                <table className="history-table">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Date
+                                            </th>
+
+                                            <th>
+                                                Ingredient
+                                            </th>
+
+                                            <th>
+                                                Type
+                                            </th>
+
+                                            <th>
+                                                Quantity
+                                            </th>
+
+                                            <th>
+                                                Reference
+                                            </th>
+
+                                            <th>
+                                                Note
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody>
+
+                                        {transactions.map(
+                                            (transaction) => (
+
+                                                <tr
+                                                    key={
+                                                        transaction.id
+                                                    }
+                                                >
+
+                                                    {/* DATE */}
+
+                                                    <td>
+
+                                                        {new Date(
+                                                            transaction.created_at
+                                                        ).toLocaleString()}
+
+                                                    </td>
+
+
+                                                    {/* INGREDIENT */}
+
+                                                    <td>
+
+                                                        <strong>
+                                                            {
+                                                                transaction.ingredient_name
+                                                            }
+                                                        </strong>
+
+                                                    </td>
+
+
+                                                    {/* TYPE */}
+
+                                                    <td>
+
+                                                        <span
+                                                            className={`transaction-type ${transaction.type.toLowerCase()}`}
+                                                        >
+
+                                                            {
+                                                                transaction.type
+                                                            }
+
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    {/* QUANTITY */}
+
+                                                    <td>
+
+                                                        <span
+                                                            className={
+                                                                Number(
+                                                                    transaction.quantity
+                                                                ) >= 0
+                                                                    ? "quantity-positive"
+                                                                    : "quantity-negative"
+                                                            }
+                                                        >
+
+                                                            {
+                                                                Number(
+                                                                    transaction.quantity
+                                                                ) >= 0
+                                                                    ? "+"
+                                                                    : ""
+                                                            }
+
+                                                            {
+                                                                transaction.quantity
+                                                            }
+
+                                                            {" "}
+
+                                                            {
+                                                                transaction.unit
+                                                            }
+
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    {/* REFERENCE */}
+
+                                                    <td>
+
+                                                        {
+                                                            transaction.reference_id
+                                                                ? `Order #${transaction.reference_id}`
+                                                                : "—"
+                                                        }
+
+                                                    </td>
+
+
+                                                    {/* NOTE */}
+
+                                                    <td>
+
+                                                        {
+                                                            transaction.note ||
+                                                            "—"
+                                                        }
+
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        )}
 
                     </div>
 
@@ -690,7 +1096,9 @@ function Inventory() {
             )}
 
         </div>
+
     );
+
 }
 
 export default Inventory;

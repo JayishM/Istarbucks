@@ -24,6 +24,7 @@ const calculateRequiredIngredients = async (connection, items) => {
         High: 7.5
     };
 
+
     for (const item of items) {
 
         const productId = item.product_id || item.id;
@@ -33,6 +34,7 @@ const calculateRequiredIngredients = async (connection, items) => {
                 `Product ID missing for ${item.name}`
             );
         }
+
 
         // ------------------------------------------
         // Get base recipe
@@ -53,11 +55,13 @@ const calculateRequiredIngredients = async (connection, items) => {
             [productId]
         );
 
+
         if (recipe.length === 0) {
             throw new Error(
                 `No recipe found for ${item.name}`
             );
         }
+
 
         const multiplier =
             sizeMultiplier[item.size] || 1;
@@ -103,6 +107,7 @@ const calculateRequiredIngredients = async (connection, items) => {
                 const selectedMilk =
                     milkMap[item.milk];
 
+
                 if (selectedMilk) {
 
                     const [milkRows] =
@@ -115,11 +120,13 @@ const calculateRequiredIngredients = async (connection, items) => {
                             [selectedMilk]
                         );
 
+
                     if (milkRows.length === 0) {
                         throw new Error(
                             `${selectedMilk} ingredient not found`
                         );
                     }
+
 
                     ingredientId =
                         milkRows[0].id;
@@ -178,17 +185,20 @@ const calculateRequiredIngredients = async (connection, items) => {
                     `
                 );
 
+
             if (coffeeRows.length === 0) {
                 throw new Error(
                     "Coffee Beans ingredient not found"
                 );
             }
 
+
             const coffeeId =
                 coffeeRows[0].id;
 
             const extraCoffee =
                 9 * itemQuantity;
+
 
             if (required.has(coffeeId)) {
 
@@ -222,17 +232,20 @@ const calculateRequiredIngredients = async (connection, items) => {
                     `
                 );
 
+
             if (oatRows.length === 0) {
                 throw new Error(
                     "Oat Milk ingredient not found"
                 );
             }
 
+
             const oatId =
                 oatRows[0].id;
 
             const extraOatMilk =
                 50 * itemQuantity;
+
 
             if (required.has(oatId)) {
 
@@ -266,17 +279,20 @@ const calculateRequiredIngredients = async (connection, items) => {
                     `
                 );
 
+
             if (caramelRows.length === 0) {
                 throw new Error(
                     "Caramel Syrup ingredient not found"
                 );
             }
 
+
             const caramelId =
                 caramelRows[0].id;
 
             const caramelQuantity =
                 15 * itemQuantity;
+
 
             if (required.has(caramelId)) {
 
@@ -295,6 +311,7 @@ const calculateRequiredIngredients = async (connection, items) => {
         }
     }
 
+
     return Array.from(required.values());
 };
 
@@ -307,6 +324,7 @@ const createOrder = async (req, res) => {
 
     const connection =
         await pool.getConnection();
+
 
     try {
 
@@ -325,6 +343,7 @@ const createOrder = async (req, res) => {
             return res.status(400).json({
                 message: "Cart is empty"
             });
+
         }
 
 
@@ -363,12 +382,15 @@ const createOrder = async (req, res) => {
                     [ingredient.ingredientId]
                 );
 
+
             if (rows.length === 0) {
 
                 throw new Error(
                     `${ingredient.name} not found`
                 );
+
             }
+
 
             const available =
                 Number(rows[0].quantity);
@@ -397,9 +419,34 @@ const createOrder = async (req, res) => {
 
                     unit:
                         ingredient.unit
+
                 });
+
             }
         }
+
+
+        // ------------------------------------------
+        // CALCULATE ORDER WAIT TIME
+        // ------------------------------------------
+
+        const totalItems = items.reduce(
+            (sum, item) =>
+                sum + (Number(item.quantity) || 1),
+            0
+        );
+
+
+        /*
+            10 minutes for first drink
+            +2 minutes for every additional drink
+            Maximum 30 minutes
+        */
+
+        const estimatedMinutes = Math.min(
+            10 + Math.max(0, totalItems - 1) * 2,
+            30
+        );
 
 
         // ------------------------------------------
@@ -413,14 +460,24 @@ const createOrder = async (req, res) => {
                 (
                     user_id,
                     total,
-                    status
+                    status,
+                    estimated_minutes,
+                    ready_at
                 )
-                VALUES (?, ?, ?)
+                VALUES
+                (
+                    ?,
+                    ?,
+                    'Preparing',
+                    ?,
+                    DATE_ADD(NOW(), INTERVAL ? MINUTE)
+                )
                 `,
                 [
                     req.user.id,
                     total,
-                    "Preparing"
+                    estimatedMinutes,
+                    estimatedMinutes
                 ]
             );
 
@@ -437,6 +494,7 @@ const createOrder = async (req, res) => {
 
             const productId =
                 item.product_id || item.id;
+
 
             await connection.execute(
                 `
@@ -490,10 +548,87 @@ const createOrder = async (req, res) => {
 
 
         // ------------------------------------------
-        // DEDUCT INGREDIENTS
+        // DEDUCT INGREDIENTS + RECORD TRANSACTIONS
         // ------------------------------------------
 
+        const orderDetails = items
+
+            .map(item => {
+
+                const quantity =
+                    Number(item.quantity) || 1;
+
+
+                const productName =
+                    item.name ||
+                    `Product #${item.product_id || item.id}`;
+
+
+                const customization = [];
+
+
+                if (item.size) {
+                    customization.push(item.size);
+                }
+
+
+                if (item.temperature) {
+                    customization.push(item.temperature);
+                }
+
+
+                if (item.milk) {
+                    customization.push(item.milk);
+                }
+
+
+                if (item.sugar) {
+                    customization.push(item.sugar);
+                }
+
+
+                if (item.extras?.extraShot) {
+                    customization.push("Extra Shot");
+                }
+
+
+                if (item.extras?.oatMilk) {
+                    customization.push("Extra Oat Milk");
+                }
+
+
+                if (item.extras?.caramel) {
+                    customization.push("Caramel");
+                }
+
+
+                const customizationText =
+                    customization.length > 0
+                        ? ` (${customization.join(", ")})`
+                        : "";
+
+
+                return `${quantity}x ${productName}${customizationText}`;
+
+            })
+
+            .join(", ");
+
+
+        // Deduct ingredients
+
         for (const ingredient of requiredIngredients) {
+
+            const ingredientId =
+                ingredient.ingredientId;
+
+            const amount =
+                Number(ingredient.quantity);
+
+
+            // --------------------------------------
+            // DEDUCT STOCK
+            // --------------------------------------
 
             const [result] =
                 await connection.execute(
@@ -501,24 +636,53 @@ const createOrder = async (req, res) => {
                     UPDATE ingredients
                     SET quantity = quantity - ?
                     WHERE id = ?
-                    AND quantity >= ?
+                      AND quantity >= ?
                     `,
                     [
-                        ingredient.quantity,
-
-                        ingredient.ingredientId,
-
-                        ingredient.quantity
+                        amount,
+                        ingredientId,
+                        amount
                     ]
                 );
 
+
+            // Make sure deduction happened
 
             if (result.affectedRows !== 1) {
 
                 throw new Error(
                     `Inventory changed while placing order for ${ingredient.name}`
                 );
+
             }
+
+
+            // --------------------------------------
+            // RECORD TRANSACTION
+            // --------------------------------------
+
+            await connection.execute(
+                `
+                INSERT INTO inventory_transactions
+                (
+                    ingredient_id,
+                    type,
+                    quantity,
+                    reference_id,
+                    note
+                )
+                VALUES (?, 'ORDER', ?, ?, ?)
+                `,
+                [
+                    ingredientId,
+
+                    -amount,
+
+                    orderId,
+
+                    `Order #${orderId} → ${orderDetails}`
+                ]
+            );
         }
 
 
@@ -529,18 +693,46 @@ const createOrder = async (req, res) => {
         await connection.commit();
 
 
+        // ------------------------------------------
+        // GET CREATED ORDER
+        // ------------------------------------------
+
+        const [createdOrder] =
+            await connection.execute(
+                `
+                SELECT
+                    id,
+                    total,
+                    status,
+                    estimated_minutes,
+                    ready_at,
+                    created_at
+                FROM orders
+                WHERE id = ?
+                `,
+                [orderId]
+            );
+
+
+        // ------------------------------------------
+        // RESPONSE
+        // ------------------------------------------
+
         res.status(201).json({
 
             message:
                 "Order placed successfully",
 
-            orderId
+            order:
+                createdOrder[0]
+
         });
 
 
     } catch (error) {
 
         await connection.rollback();
+
 
         console.error(
             "Create order error:",
@@ -553,12 +745,14 @@ const createOrder = async (req, res) => {
             message:
                 error.message ||
                 "Failed to create order"
+
         });
 
 
     } finally {
 
         connection.release();
+
     }
 };
 
@@ -571,6 +765,25 @@ const getOrders = async (req, res) => {
 
     try {
 
+        // ------------------------------------------
+        // AUTOMATICALLY COMPLETE EXPIRED ORDERS
+        // ------------------------------------------
+
+        await pool.execute(
+            `
+            UPDATE orders
+            SET status = 'Completed'
+            WHERE ready_at IS NOT NULL
+              AND ready_at <= NOW()
+              AND status = 'Preparing'
+            `
+        );
+
+
+        // ------------------------------------------
+        // GET USER ORDERS
+        // ------------------------------------------
+
         const [orders] =
             await pool.execute(
                 `
@@ -578,6 +791,8 @@ const getOrders = async (req, res) => {
                     id,
                     total,
                     status,
+                    estimated_minutes,
+                    ready_at,
                     created_at
                 FROM orders
                 WHERE user_id = ?
@@ -586,6 +801,10 @@ const getOrders = async (req, res) => {
                 [req.user.id]
             );
 
+
+        // ------------------------------------------
+        // GET ITEMS FOR EACH ORDER
+        // ------------------------------------------
 
         for (const order of orders) {
 
@@ -620,6 +839,10 @@ const getOrders = async (req, res) => {
         }
 
 
+        // ------------------------------------------
+        // SEND ORDERS
+        // ------------------------------------------
+
         res.json({
             orders
         });
@@ -634,13 +857,17 @@ const getOrders = async (req, res) => {
 
 
         res.status(500).json({
-
             message:
                 "Failed to fetch orders"
         });
+
     }
 };
 
+
+// ==========================================
+// EXPORT
+// ==========================================
 
 module.exports = {
     createOrder,

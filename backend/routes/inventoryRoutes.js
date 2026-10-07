@@ -3,22 +3,18 @@ const express = require("express");
 const {
     getInventory,
     updateInventory,
-    restockIngredient
+    restockIngredient,
+    getTransactions
 } = require("../controllers/inventoryController");
 
 const router = express.Router();
 
-
-// GET /api/inventory
 router.get("/", getInventory);
 
+router.get("/transactions", getTransactions);
 
-// PUT /api/inventory/:id
 router.put("/:id", updateInventory);
 
-
-// POST /api/inventory/:id/restock
 router.post("/:id/restock", restockIngredient);
-
 
 module.exports = router;

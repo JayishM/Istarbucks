@@ -1,11 +1,18 @@
 import "./Checkout.css";
+
 import { useNavigate } from "react-router-dom";
+
 import { useCart } from "../../context/CartContext";
+
 import { useAuth } from "../../context/AuthContext";
+
 import { useState } from "react";
 
+
 function Checkout() {
+
     const navigate = useNavigate();
+
 
     const {
         cart,
@@ -13,11 +20,17 @@ function Checkout() {
         clearCart
     } = useCart();
 
+
+    const [placingOrder, setPlacingOrder] = useState(false);
+
     const { token, isLoggedIn } = useAuth();
 
     const [paymentMethod, setPaymentMethod] = useState("cod");
+
     const [loading, setLoading] = useState(false);
+
     const [error, setError] = useState("");
+
 
     /*
         =========================
@@ -43,23 +56,48 @@ function Checkout() {
     */
 
     const handleSubmit = async (e) => {
+
         e.preventDefault();
 
         setError("");
 
+
         if (cart.length === 0) {
+
             navigate("/menu");
+
             return;
         }
 
-        if (!isLoggedIn || !token) {
+
+        if (!token) {
+
             navigate("/login");
+
             return;
         }
 
-        setLoading(true);
 
         try {
+
+            setPlacingOrder(true);
+
+            setLoading(true);
+
+
+            const deliveryFee = cart.length > 0 ? 2.00 : 0;
+
+            const tax = cartTotal * 0.08;
+
+            const grandTotal =
+                cartTotal +
+                deliveryFee +
+                tax;
+
+
+            /*
+                Send order to backend
+            */
 
             const response = await fetch(
                 "http://localhost:3000/api/orders",
@@ -68,92 +106,115 @@ function Checkout() {
 
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
+
+                        Authorization: `Bearer ${token}`
                     },
 
                     body: JSON.stringify({
                         items: cart,
-
-                        subtotal: subtotal,
-
-                        delivery: deliveryFee,
-
-                        tax: tax,
-
-                        total: grandTotal,
-
-                        paymentMethod: paymentMethod
+                        total: grandTotal
                     })
                 }
             );
 
+
             const data = await response.json();
 
+
             if (!response.ok) {
-                setError(
+
+                throw new Error(
                     data.message || "Failed to place order"
                 );
-                return;
+
             }
 
 
             /*
-                Create order object for
-                OrderSuccess page
+                =========================
+                BACKEND ORDER
+                =========================
+
+                Backend should return:
+
+                id
+                total
+                status
+                estimated_minutes
+                ready_at
             */
 
             const order = {
-                id: data.orderId,
 
-                items: cart,
+                ...data.order,
 
-                subtotal: subtotal,
+                subtotal: cartTotal,
 
                 delivery: deliveryFee,
 
                 tax: tax,
 
-                total: grandTotal,
-
                 paymentMethod: paymentMethod,
 
-                date: new Date().toISOString(),
+                /*
+                    These come from MySQL/backend.
+                    Do NOT calculate the timer here.
+                */
 
-                status: "Preparing"
+                estimated_minutes:
+                    data.order?.estimated_minutes ?? null,
+
+                ready_at:
+                    data.order?.ready_at ?? null
             };
 
 
             /*
                 Clear cart only after
-                successful database save
+                successful order creation
             */
 
             clearCart();
 
 
             /*
-                Go to success page
+                Go to order success page
+
+                The OrderSuccess page will use
+                ready_at to display the countdown.
             */
 
             navigate("/order-success", {
+
                 state: {
                     order
                 }
+
             });
+
 
         } catch (error) {
 
-            console.error(error);
-
-            setError(
-                "Unable to connect to the server."
+            console.error(
+                "Order placement error:",
+                error
             );
 
+            setError(
+                error.message ||
+                "Something went wrong while placing your order."
+            );
+
+            alert(error.message);
+
         } finally {
+
+            setPlacingOrder(false);
 
             setLoading(false);
 
         }
+
     };
 
 
@@ -164,31 +225,43 @@ function Checkout() {
     */
 
     if (cart.length === 0) {
+
         return (
+
             <div className="checkout-empty">
 
                 <div className="checkout-empty-icon">
+
                     <i className="bi bi-cart-x"></i>
+
                 </div>
+
 
                 <h2>
                     Your cart is empty
                 </h2>
+
 
                 <p>
                     Add some delicious coffee before
                     checking out.
                 </p>
 
+
                 <button
                     onClick={() => navigate("/menu")}
                 >
+
                     Explore Menu
+
                     <i className="bi bi-arrow-right"></i>
+
                 </button>
 
             </div>
+
         );
+
     }
 
 
@@ -199,7 +272,9 @@ function Checkout() {
     */
 
     return (
+
         <div className="checkout-page">
+
 
             {/* HERO */}
 
@@ -209,9 +284,11 @@ function Checkout() {
                     CHECKOUT
                 </span>
 
+
                 <h1>
                     Complete Your <strong>Order</strong>
                 </h1>
+
 
                 <p>
                     Almost there! Enter your details
@@ -224,8 +301,10 @@ function Checkout() {
             {/* ERROR */}
 
             {error && (
+
                 <div
                     className="checkout-error"
+
                     style={{
                         maxWidth: "1200px",
                         margin: "20px auto",
@@ -235,8 +314,11 @@ function Checkout() {
                         color: "#ffb3b3"
                     }}
                 >
+
                     {error}
+
                 </div>
+
             )}
 
 
@@ -251,6 +333,7 @@ function Checkout() {
                     className="checkout-form"
                     onSubmit={handleSubmit}
                 >
+
 
                     <div className="checkout-heading">
 
@@ -270,8 +353,11 @@ function Checkout() {
                     <div className="form-section">
 
                         <h3>
+
                             <i className="bi bi-person"></i>
+
                             Contact Information
+
                         </h3>
 
 
@@ -331,8 +417,11 @@ function Checkout() {
                     <div className="form-section">
 
                         <h3>
+
                             <i className="bi bi-geo-alt"></i>
+
                             Delivery Address
+
                         </h3>
 
 
@@ -392,8 +481,11 @@ function Checkout() {
                     <div className="form-section">
 
                         <h3>
+
                             <i className="bi bi-credit-card"></i>
+
                             Payment Method
+
                         </h3>
 
 
@@ -403,32 +495,42 @@ function Checkout() {
                             {/* COD */}
 
                             <label
+
                                 className={
                                     paymentMethod === "cod"
                                         ? "payment-option selected"
                                         : "payment-option"
                                 }
+
                             >
 
                                 <input
                                     type="radio"
                                     name="payment"
                                     value="cod"
+
                                     checked={
                                         paymentMethod === "cod"
                                     }
+
                                     onChange={(e) =>
                                         setPaymentMethod(
                                             e.target.value
                                         )
                                     }
+
                                 />
 
+
                                 <div className="payment-icon">
+
                                     <i className="bi bi-cash-stack"></i>
+
                                 </div>
 
+
                                 <div>
+
                                     <strong>
                                         Cash on Delivery
                                     </strong>
@@ -436,7 +538,9 @@ function Checkout() {
                                     <span>
                                         Pay when your order arrives
                                     </span>
+
                                 </div>
+
 
                                 <i className="bi bi-check-circle-fill payment-check"></i>
 
@@ -446,32 +550,42 @@ function Checkout() {
                             {/* UPI */}
 
                             <label
+
                                 className={
                                     paymentMethod === "upi"
                                         ? "payment-option selected"
                                         : "payment-option"
                                 }
+
                             >
 
                                 <input
                                     type="radio"
                                     name="payment"
                                     value="upi"
+
                                     checked={
                                         paymentMethod === "upi"
                                     }
+
                                     onChange={(e) =>
                                         setPaymentMethod(
                                             e.target.value
                                         )
                                     }
+
                                 />
 
+
                                 <div className="payment-icon">
+
                                     <i className="bi bi-phone"></i>
+
                                 </div>
 
+
                                 <div>
+
                                     <strong>
                                         UPI
                                     </strong>
@@ -479,7 +593,9 @@ function Checkout() {
                                     <span>
                                         Google Pay, PhonePe, Paytm
                                     </span>
+
                                 </div>
+
 
                                 <i className="bi bi-check-circle-fill payment-check"></i>
 
@@ -489,32 +605,42 @@ function Checkout() {
                             {/* CARD */}
 
                             <label
+
                                 className={
                                     paymentMethod === "card"
                                         ? "payment-option selected"
                                         : "payment-option"
                                 }
+
                             >
 
                                 <input
                                     type="radio"
                                     name="payment"
                                     value="card"
+
                                     checked={
                                         paymentMethod === "card"
                                     }
+
                                     onChange={(e) =>
                                         setPaymentMethod(
                                             e.target.value
                                         )
                                     }
+
                                 />
 
+
                                 <div className="payment-icon">
+
                                     <i className="bi bi-credit-card"></i>
+
                                 </div>
 
+
                                 <div>
+
                                     <strong>
                                         Credit / Debit Card
                                     </strong>
@@ -522,11 +648,14 @@ function Checkout() {
                                     <span>
                                         Visa, Mastercard and more
                                     </span>
+
                                 </div>
+
 
                                 <i className="bi bi-check-circle-fill payment-check"></i>
 
                             </label>
+
 
                         </div>
 
@@ -538,19 +667,23 @@ function Checkout() {
                     <button
                         type="submit"
                         className="place-order-btn"
-                        disabled={loading}
+                        disabled={loading || placingOrder}
                     >
 
-                        {loading
+                        {loading || placingOrder
                             ? "Placing Order..."
                             : "Place Order"
                         }
 
-                        {!loading && (
+
+                        {!loading && !placingOrder && (
+
                             <i className="bi bi-arrow-right"></i>
+
                         )}
 
                     </button>
+
 
                 </form>
 
@@ -559,9 +692,11 @@ function Checkout() {
 
                 <aside className="checkout-summary">
 
+
                     <span className="summary-label">
                         YOUR ORDER
                     </span>
+
 
                     <h2>
                         Order <strong>Summary</strong>
@@ -576,11 +711,13 @@ function Checkout() {
 
                             <div
                                 className="checkout-item"
+
                                 key={
                                     item.customizationId ||
                                     `${item.name}-${index}`
                                 }
                             >
+
 
                                 <div className="checkout-item-image">
 
@@ -602,9 +739,11 @@ function Checkout() {
                                         {item.name}
                                     </h4>
 
+
                                     <span>
                                         {item.category}
                                     </span>
+
 
                                     {/* Customization */}
 
@@ -620,9 +759,11 @@ function Checkout() {
                                             `${item.size} • `
                                         }
 
+
                                         {item.temperature &&
                                             `${item.temperature} • `
                                         }
+
 
                                         {item.milk &&
                                             `${item.milk} Milk`
@@ -634,12 +775,16 @@ function Checkout() {
 
 
                                 <strong>
+
                                     $
+
                                     {(
                                         Number(item.price) *
                                         item.quantity
                                     ).toFixed(2)}
+
                                 </strong>
+
 
                             </div>
 
@@ -714,11 +859,61 @@ function Checkout() {
                     </div>
 
 
+                    {/* WAITING TIME INFO */}
+
+                    <div
+                        style={{
+                            marginTop: "20px",
+                            padding: "14px 16px",
+                            borderRadius: "10px",
+                            background: "rgba(198, 138, 82, 0.10)",
+                            border: "1px solid rgba(198, 138, 82, 0.25)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px"
+                        }}
+                    >
+
+                        <i
+                            className="bi bi-clock"
+                            style={{
+                                fontSize: "20px",
+                                color: "#C68A52"
+                            }}
+                        ></i>
+
+
+                        <div>
+
+                            <strong
+                                style={{
+                                    display: "block"
+                                }}
+                            >
+                                Estimated preparation time
+                            </strong>
+
+                            <span
+                                style={{
+                                    fontSize: "13px",
+                                    opacity: 0.7
+                                }}
+                            >
+                                Your exact waiting time will be shown
+                                after placing the order.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
                     {/* SECURE CHECKOUT */}
 
                     <div className="secure-checkout">
 
                         <i className="bi bi-shield-check"></i>
+
 
                         <div>
 
@@ -749,12 +944,18 @@ function Checkout() {
 
                     </button>
 
+
                 </aside>
+
 
             </section>
 
+
         </div>
+
     );
+
 }
+
 
 export default Checkout;
